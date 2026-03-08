@@ -1021,7 +1021,7 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
   const { data: endorsedWorkers, isLoading } = useQuery({
     queryKey: ["endorsed-workers", userId],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("worker_endorsements")
         .select("*, service_workers(*)")
         .eq("landlord_id", userId)
