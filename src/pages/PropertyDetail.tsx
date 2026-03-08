@@ -112,7 +112,7 @@ const PropertyDetail = () => {
   }
 
   const images = property.images?.length ? property.images : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop"];
-  const isVerified = (property as any).landlords?.verification_status === "verified";
+  const isVerified = landlordRecord?.verification_status === "verified";
 
   return (
     <div className="min-h-screen bg-background">
