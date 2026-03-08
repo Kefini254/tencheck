@@ -234,6 +234,56 @@ export type Database = {
         }
         Relationships: []
       }
+      rent_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          landlord_id: string
+          mpesa_transaction_code: string | null
+          payment_date: string | null
+          payment_method: string
+          property_id: string | null
+          tenant_id: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          landlord_id: string
+          mpesa_transaction_code?: string | null
+          payment_date?: string | null
+          payment_method?: string
+          property_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          landlord_id?: string
+          mpesa_transaction_code?: string | null
+          payment_date?: string | null
+          payment_method?: string
+          property_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rental_records: {
         Row: {
           created_at: string
@@ -389,6 +439,30 @@ export type Database = {
           tenant_id?: string
           total_payments?: number
           verified_sms_payments?: number
+        }
+        Relationships: []
+      }
+      tenant_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
