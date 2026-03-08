@@ -84,7 +84,9 @@ const Dashboard = () => {
 
   const tenantTabs = [
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "ai-recommendations", icon: Sparkles, label: "AI Matches" },
     { id: "credit-passport", icon: Award, label: "Credit Passport" },
+    { id: "share-passport", icon: Share2, label: "Share Passport" },
     { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
     { id: "wallet", icon: Wallet, label: "Wallet" },
     { id: "financial-requests", icon: Banknote, label: "Financing" },
