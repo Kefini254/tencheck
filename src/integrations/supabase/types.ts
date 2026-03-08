@@ -231,6 +231,87 @@ export type Database = {
           },
         ]
       }
+      service_requests: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          location: string
+          requester_id: string
+          service_category: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location: string
+          requester_id: string
+          service_category: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string
+          requester_id?: string
+          service_category?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      service_workers: {
+        Row: {
+          created_at: string
+          experience_years: number | null
+          id: string
+          is_available: boolean
+          landlord_endorser_id: string | null
+          latitude: number | null
+          location: string
+          longitude: number | null
+          name: string
+          phone: string | null
+          rating: number | null
+          service_category: string
+          user_id: string | null
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          is_available?: boolean
+          landlord_endorser_id?: string | null
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          rating?: number | null
+          service_category: string
+          user_id?: string | null
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          is_available?: boolean
+          landlord_endorser_id?: string | null
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          service_category?: string
+          user_id?: string | null
+          verification_status?: string
+        }
+        Relationships: []
+      }
       tenant_scores: {
         Row: {
           last_updated: string
@@ -305,6 +386,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      worker_endorsements: {
+        Row: {
+          created_at: string
+          endorsement_notes: string | null
+          id: string
+          landlord_id: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          endorsement_notes?: string | null
+          id?: string
+          landlord_id: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          endorsement_notes?: string | null
+          id?: string
+          landlord_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_endorsements_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "service_workers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
