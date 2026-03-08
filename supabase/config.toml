@@ -1,1 +1,4 @@
 project_id = "iuledmffqgjjcwjfvxns"
+
+[functions.parse-sms]
+verify_jwt = true
