@@ -14,6 +14,7 @@ import PropertyDetail from "./pages/PropertyDetail";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import TenantProfilePage from "./pages/TenantProfilePage";
+import PassportPublic from "./pages/PassportPublic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
