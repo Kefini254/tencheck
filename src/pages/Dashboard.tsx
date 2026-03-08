@@ -69,7 +69,9 @@ const Dashboard = () => {
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
+    { id: "my-profile", icon: User, label: "My Profile" },
   ];
 
   const tabs = role === "landlord" ? landlordTabs : tenantTabs;
