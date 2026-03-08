@@ -9,7 +9,8 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award
+  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
+  TrendingDown, Users, Scale
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +23,10 @@ import { TenantPaymentPanel, LandlordPaymentOverview, WalletDeposit } from "@/co
 import { ServiceRequestPanel } from "@/components/dashboard/ServiceRequestPanel";
 import CreditPassportCard from "@/components/dashboard/CreditPassportCard";
 import FinancialRequestPanel from "@/components/dashboard/FinancialRequestPanel";
+import { TenantRiskPanel } from "@/components/dashboard/TenantRiskPanel";
+import { PropertyDemandPanel } from "@/components/dashboard/PropertyDemandPanel";
+import { TrustNetworkPanel } from "@/components/dashboard/TrustNetworkPanel";
+import { DisputeOverviewPanel } from "@/components/dashboard/DisputeOverviewPanel";
 
 type Tab = string;
 
@@ -66,6 +71,10 @@ const Dashboard = () => {
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
     { id: "payment-overview", icon: CreditCard, label: "Payments" },
+    { id: "tenant-risk", icon: TrendingDown, label: "Tenant Risk" },
+    { id: "demand-insights", icon: TrendingUp, label: "Demand Insights" },
+    { id: "trust-network", icon: Users, label: "Trust Network" },
+    { id: "dispute-overview", icon: Scale, label: "Disputes" },
     { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
     { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
   ];
@@ -78,6 +87,8 @@ const Dashboard = () => {
     { id: "financial-requests", icon: Banknote, label: "Financing" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "my-risk", icon: TrendingDown, label: "My Risk Score" },
+    { id: "trust-connections", icon: Users, label: "Trust Network" },
     { id: "services", icon: Wifi, label: "Services" },
     { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
@@ -188,6 +199,10 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
                 {role === "landlord" && activeTab === "endorse-worker" && <EndorseWorkerView userId={user.id} />}
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
+                {role === "landlord" && activeTab === "tenant-risk" && <LandlordTenantRiskView />}
+                {role === "landlord" && activeTab === "demand-insights" && <PropertyDemandPanel />}
+                {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
+                {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
                 {role === "tenant" && activeTab === "credit-passport" && <CreditPassportCard userId={user.id} />}
                 {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
@@ -202,6 +217,8 @@ const Dashboard = () => {
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-risk" && <TenantRiskPanel tenantId={user.id} />}
+                {role === "tenant" && activeTab === "trust-connections" && <TrustNetworkPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
                   <div className="text-center py-8">
@@ -1201,6 +1218,53 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+
+const LandlordTenantRiskView = () => {
+  const [tenantPhone, setTenantPhone] = useState("");
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  const handleSearch = async () => {
+    if (!tenantPhone.trim()) return;
+    setSearching(true);
+    const { data: tenant } = await supabase
+      .from("tenants")
+      .select("user_id")
+      .eq("phone", tenantPhone)
+      .maybeSingle();
+    if (tenant?.user_id) {
+      setTenantId(tenant.user_id);
+    } else {
+      toast.info("No tenant found with that phone number.");
+      setTenantId(null);
+    }
+    setSearching(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent">
+            <TrendingDown className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">Tenant Risk Lookup</h2>
+            <p className="text-sm text-muted-foreground">Search a tenant to view their risk assessment</p>
+          </div>
+        </div>
+        <div className="flex gap-3 max-w-md">
+          <Input placeholder="Tenant phone number" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
+          <Button className="gap-2 shrink-0" onClick={handleSearch} disabled={searching}>
+            <Search className="h-4 w-4" /> {searching ? "..." : "Search"}
+          </Button>
+        </div>
+      </div>
+      {tenantId && <TenantRiskPanel tenantId={tenantId} />}
     </div>
   );
 };

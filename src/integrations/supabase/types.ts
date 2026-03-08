@@ -18,29 +18,44 @@ export type Database = {
         Row: {
           created_at: string
           dispute_reason: string
+          dispute_type: string
           evidence_url: string | null
           id: string
+          landlord_id: string | null
+          property_id: string | null
           rental_record_id: string | null
+          resolution_status: string
           status: string
           tenant_id: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           dispute_reason: string
+          dispute_type?: string
           evidence_url?: string | null
           id?: string
+          landlord_id?: string | null
+          property_id?: string | null
           rental_record_id?: string | null
+          resolution_status?: string
           status?: string
           tenant_id: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           dispute_reason?: string
+          dispute_type?: string
           evidence_url?: string | null
           id?: string
+          landlord_id?: string | null
+          property_id?: string | null
           rental_record_id?: string | null
+          resolution_status?: string
           status?: string
           tenant_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -267,6 +282,39 @@ export type Database = {
         }
         Relationships: []
       }
+      property_demand: {
+        Row: {
+          average_rent: number
+          created_at: string
+          id: string
+          location_city: string
+          location_county: string
+          total_searches: number
+          updated_at: string
+          vacancy_rate: number
+        }
+        Insert: {
+          average_rent?: number
+          created_at?: string
+          id?: string
+          location_city: string
+          location_county: string
+          total_searches?: number
+          updated_at?: string
+          vacancy_rate?: number
+        }
+        Update: {
+          average_rent?: number
+          created_at?: string
+          id?: string
+          location_city?: string
+          location_county?: string
+          total_searches?: number
+          updated_at?: string
+          vacancy_rate?: number
+        }
+        Relationships: []
+      }
       rent_transactions: {
         Row: {
           amount: number
@@ -478,6 +526,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_risk: {
+        Row: {
+          created_at: string
+          disputes_count: number
+          id: string
+          late_payments_count: number
+          missed_payments_count: number
+          risk_category: string
+          risk_score: number
+          tenant_id: string
+          updated_at: string
+          verified_payments_count: number
+        }
+        Insert: {
+          created_at?: string
+          disputes_count?: number
+          id?: string
+          late_payments_count?: number
+          missed_payments_count?: number
+          risk_category?: string
+          risk_score?: number
+          tenant_id: string
+          updated_at?: string
+          verified_payments_count?: number
+        }
+        Update: {
+          created_at?: string
+          disputes_count?: number
+          id?: string
+          late_payments_count?: number
+          missed_payments_count?: number
+          risk_category?: string
+          risk_score?: number
+          tenant_id?: string
+          updated_at?: string
+          verified_payments_count?: number
+        }
+        Relationships: []
+      }
       tenant_scores: {
         Row: {
           confidence_level: string
@@ -583,6 +670,36 @@ export type Database = {
         }
         Relationships: []
       }
+      trust_network: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          relation_type: string
+          to_user_id: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          relation_type: string
+          to_user_id: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          relation_type?: string
+          to_user_id?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -642,6 +759,7 @@ export type Database = {
         Args: { _tenant_id: string }
         Returns: number
       }
+      calculate_tenant_risk: { Args: { _tenant_id: string }; Returns: number }
       calculate_tenant_score: { Args: { _tenant_id: string }; Returns: number }
       find_or_create_tenant: {
         Args: {
@@ -659,6 +777,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_property_demand: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
