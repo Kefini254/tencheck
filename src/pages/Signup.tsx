@@ -12,6 +12,7 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [nationalId, setNationalId] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"tenant" | "landlord">("tenant");
   const [loading, setLoading] = useState(false);
