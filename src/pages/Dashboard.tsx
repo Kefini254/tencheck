@@ -71,6 +71,10 @@ const Dashboard = () => {
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
     { id: "payment-overview", icon: CreditCard, label: "Payments" },
+    { id: "tenant-risk", icon: TrendingDown, label: "Tenant Risk" },
+    { id: "demand-insights", icon: TrendingUp, label: "Demand Insights" },
+    { id: "trust-network", icon: Users, label: "Trust Network" },
+    { id: "dispute-overview", icon: Scale, label: "Disputes" },
     { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
     { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
   ];
