@@ -181,11 +181,20 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
                 {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
+                {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
                 {role === "landlord" && activeTab === "endorse-worker" && <EndorseWorkerView userId={user.id} />}
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
+                {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
+                {role === "tenant" && activeTab === "wallet" && (
+                  <div className="space-y-6">
+                    <TenantPaymentPanel userId={user.id} />
+                    <WalletDeposit userId={user.id} />
+                  </div>
+                )}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
+                {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
