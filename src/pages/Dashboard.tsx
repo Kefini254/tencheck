@@ -1222,4 +1222,51 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
   );
 };
 
+
+const LandlordTenantRiskView = () => {
+  const [tenantPhone, setTenantPhone] = useState("");
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  const handleSearch = async () => {
+    if (!tenantPhone.trim()) return;
+    setSearching(true);
+    const { data: tenant } = await supabase
+      .from("tenants")
+      .select("user_id")
+      .eq("phone", tenantPhone)
+      .maybeSingle();
+    if (tenant?.user_id) {
+      setTenantId(tenant.user_id);
+    } else {
+      toast.info("No tenant found with that phone number.");
+      setTenantId(null);
+    }
+    setSearching(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent">
+            <TrendingDown className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">Tenant Risk Lookup</h2>
+            <p className="text-sm text-muted-foreground">Search a tenant to view their risk assessment</p>
+          </div>
+        </div>
+        <div className="flex gap-3 max-w-md">
+          <Input placeholder="Tenant phone number" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
+          <Button className="gap-2 shrink-0" onClick={handleSearch} disabled={searching}>
+            <Search className="h-4 w-4" /> {searching ? "..." : "Search"}
+          </Button>
+        </div>
+      </div>
+      {tenantId && <TenantRiskPanel tenantId={tenantId} />}
+    </div>
+  );
+};
+
 export default Dashboard;
