@@ -217,6 +217,8 @@ const Dashboard = () => {
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-risk" && <TenantRiskPanel tenantId={user.id} />}
+                {role === "tenant" && activeTab === "trust-connections" && <TrustNetworkPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
                   <div className="text-center py-8">
