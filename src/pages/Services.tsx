@@ -42,6 +42,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 const FEATURED_CATEGORIES = [
+  { name: "WiFi Installation", icon: Wifi, color: "bg-indigo-500/10 text-indigo-600" },
   { name: "House Cleaning", icon: Sparkles, color: "bg-blue-500/10 text-blue-600" },
   { name: "Plumbing", icon: Droplets, color: "bg-cyan-500/10 text-cyan-600" },
   { name: "Electrical Repair", icon: Zap, color: "bg-yellow-500/10 text-yellow-600" },
