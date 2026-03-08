@@ -210,6 +210,8 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
+                {role === "tenant" && activeTab === "ai-recommendations" && <AIMatchPanel userId={user.id} mode="tenant" />}
+                {role === "tenant" && activeTab === "share-passport" && <SharePassport userId={user.id} />}
                 {role === "tenant" && activeTab === "credit-passport" && <CreditPassportCard userId={user.id} />}
                 {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "wallet" && (
