@@ -27,6 +27,8 @@ import { TenantRiskPanel } from "@/components/dashboard/TenantRiskPanel";
 import { PropertyDemandPanel } from "@/components/dashboard/PropertyDemandPanel";
 import { TrustNetworkPanel } from "@/components/dashboard/TrustNetworkPanel";
 import { DisputeOverviewPanel } from "@/components/dashboard/DisputeOverviewPanel";
+import SharePassport from "@/components/dashboard/SharePassport";
+import AIMatchPanel from "@/components/dashboard/AIMatchPanel";
 
 type Tab = string;
 
