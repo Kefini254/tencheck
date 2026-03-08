@@ -180,7 +180,13 @@ const Dashboard = () => {
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-profile" && (
+                  <div className="text-center py-8">
+                    <Button asChild><Link to="/my-profile">Open Full Profile</Link></Button>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
