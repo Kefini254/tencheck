@@ -926,6 +926,28 @@ const MyScoreView = ({ userId }: { userId: string }) => {
   );
 };
 
+const MyDisputesView = ({ userId }: { userId: string }) => {
+  const { data: records } = useQuery({
+    queryKey: ["my-records-for-disputes", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("rental_records")
+        .select("*")
+        .eq("tenant_id", userId)
+        .order("payment_date", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <DisputeForm tenantId={userId} rentalRecords={records || []} />
+      </div>
+    </div>
+  );
+};
+
 const TenantInquiriesView = ({ userId }: { userId: string }) => {
   const { data: inquiries, isLoading } = useQuery({
     queryKey: ["tenant-inquiries", userId],
