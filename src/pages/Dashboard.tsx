@@ -998,4 +998,186 @@ const TenantInquiriesView = ({ userId }: { userId: string }) => {
   );
 };
 
+const SERVICE_CATEGORIES = [
+  "Relocation Assistance", "Furniture Moving", "House Cleaning", "Deep Cleaning",
+  "Landscaping", "Lawn Mowing", "Hedge Trimming", "Tree Pruning",
+  "Waste Removal", "Interior Painting", "Exterior Painting", "Carpentry",
+  "Cabinet Installation", "Masonry", "Plumbing", "Electrical Repair",
+  "Appliance Installation", "Curtain Installation", "Furniture Assembly",
+  "Pest Control", "Roof Repair", "Window Repair", "Tile Installation",
+  "Water Tank Cleaning", "Drain Unclogging", "General Handyman",
+];
+
+const EndorseWorkerView = ({ userId }: { userId: string }) => {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [category, setCategory] = useState("General Handyman");
+  const [experience, setExperience] = useState("1");
+  const [location, setLocation] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const { data: endorsedWorkers, isLoading } = useQuery({
+    queryKey: ["endorsed-workers", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("worker_endorsements")
+        .select("*, service_workers(*)")
+        .eq("landlord_id", userId)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const handleEndorse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    // Create worker profile
+    const { data: worker, error: workerErr } = await supabase
+      .from("service_workers")
+      .insert({
+        name,
+        phone,
+        location,
+        service_category: category,
+        experience_years: parseInt(experience),
+        landlord_endorser_id: userId,
+        verification_status: "verified",
+      })
+      .select()
+      .single();
+
+    if (workerErr || !worker) {
+      toast.error(workerErr?.message || "Failed to create worker");
+      setSubmitting(false);
+      return;
+    }
+
+    // Create endorsement
+    const { error: endorseErr } = await supabase
+      .from("worker_endorsements")
+      .insert({
+        worker_id: worker.id,
+        landlord_id: userId,
+        endorsement_notes: notes,
+      });
+
+    setSubmitting(false);
+    if (endorseErr) {
+      toast.error(endorseErr.message);
+    } else {
+      toast.success("Worker endorsed successfully!");
+      queryClient.invalidateQueries({ queryKey: ["endorsed-workers"] });
+      setName("");
+      setPhone("");
+      setLocation("");
+      setExperience("1");
+      setNotes("");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Endorse Form */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent">
+            <UserCheck className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">Endorse a Service Worker</h2>
+            <p className="text-sm text-muted-foreground">Recommend a trusted worker to the TenCheck community</p>
+          </div>
+        </div>
+        <form onSubmit={handleEndorse} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Worker Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="John Kamau" required />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0712 345 678" required />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Service Category</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                {SERVICE_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Years of Experience</Label>
+              <Input type="number" min="0" value={experience} onChange={(e) => setExperience(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Kilimani, Nairobi" required />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Endorsement Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Why do you recommend this worker? Quality of work, reliability, etc."
+              rows={3}
+            />
+          </div>
+          <Button type="submit" disabled={submitting} className="gap-2">
+            <UserCheck className="h-4 w-4" />
+            {submitting ? "Endorsing..." : "Endorse Worker"}
+          </Button>
+        </form>
+      </div>
+
+      {/* Endorsed workers list */}
+      <div>
+        <h3 className="font-display font-bold text-lg text-foreground mb-4">Your Endorsed Workers</h3>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />)}
+          </div>
+        ) : endorsedWorkers?.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
+            <UserCheck className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">You haven't endorsed any workers yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {endorsedWorkers?.map((e: any) => (
+              <div key={e.id} className="rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <UserCheck className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm text-foreground">{e.service_workers?.name}</p>
+                    <p className="text-xs text-muted-foreground">{e.service_workers?.service_category} • {e.service_workers?.location}</p>
+                    {e.endorsement_notes && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">"{e.endorsement_notes}"</p>
+                    )}
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 text-[10px]">
+                    <Shield className="h-3 w-3 mr-1" /> Endorsed
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default Dashboard;
