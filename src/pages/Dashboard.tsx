@@ -71,6 +71,7 @@ const Dashboard = () => {
   const landlordTabs = [
     { id: "my-properties", icon: Building2, label: "Properties" },
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
+    { id: "ai-tenant-rank", icon: Sparkles, label: "AI Tenant Rank" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
     { id: "payment-overview", icon: CreditCard, label: "Payments" },
     { id: "tenant-risk", icon: TrendingDown, label: "Tenant Risk" },
