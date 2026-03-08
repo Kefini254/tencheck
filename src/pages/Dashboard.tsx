@@ -868,7 +868,13 @@ const MyScoreView = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="font-display font-bold text-xl mb-6 text-foreground">Your Reputation Score</h2>
+        <h2 className="font-display font-bold text-xl mb-2 text-foreground">Your Reputation Score</h2>
+        <div className="mb-4">
+          <ConfidenceBadge level={(score as any)?.confidence_level || "low"} />
+          <span className="text-xs text-muted-foreground ml-2">
+            {(score as any)?.data_sources_count ?? 0} landlord(s) reporting
+          </span>
+        </div>
         <div className="flex flex-col sm:flex-row items-center gap-8">
           <ScoreGauge score={score?.score ?? 100} />
           <div className="grid grid-cols-2 gap-3 flex-1 w-full">
@@ -890,6 +896,12 @@ const MyScoreView = ({ userId }: { userId: string }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Payment Timeline */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h3 className="font-display font-bold mb-4 text-foreground">Payment Timeline</h3>
+        <PaymentTimeline tenantId={userId} />
       </div>
 
       {evidence && evidence.length > 0 && (
