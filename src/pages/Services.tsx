@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Search, MapPin, Star, Phone, Shield, ChevronDown,
   Truck, Sparkles, TreePine, Paintbrush, Wrench, Bug,
-  Hammer, Droplets, Zap, Scissors, Package, Home,
+  Hammer, Droplets, Zap, Scissors, Package, Home, Wifi,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
