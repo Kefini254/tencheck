@@ -10,7 +10,7 @@ import {
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
   UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
-  TrendingDown, Users, Scale
+  TrendingDown, Users, Scale, Sparkles, Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
