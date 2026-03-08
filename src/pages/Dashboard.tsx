@@ -710,36 +710,22 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
 // ===== Tenant Views =====
 
 const BrowseHousesView = () => {
-  const { user } = useAuth();
-  const [inquiryPropId, setInquiryPropId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-
   const { data: properties, isLoading } = useQuery({
     queryKey: ["all-properties"],
     queryFn: async () => {
-      const { data } = await supabase.from("properties").select("*").eq("is_available", true).order("created_at", { ascending: false });
+      const { data } = await supabase.from("properties").select("*").eq("is_available", true).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
   });
 
-  const sendInquiry = async () => {
-    if (!user || !inquiryPropId || !message.trim()) return;
-    const { error } = await supabase.from("inquiries").insert({
-      tenant_id: user.id,
-      property_id: inquiryPropId,
-      message,
-    });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Inquiry sent!");
-      setInquiryPropId(null);
-      setMessage("");
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <h2 className="font-display font-bold text-xl text-foreground">Available Properties</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-display font-bold text-xl text-foreground">Available Properties</h2>
+        <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <Link to="/properties"><Eye className="h-3.5 w-3.5" /> View All</Link>
+        </Button>
+      </div>
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />)}
@@ -752,11 +738,10 @@ const BrowseHousesView = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {properties?.map((p) => (
-            <div key={p.id} className="rounded-2xl border border-border bg-card overflow-hidden">
-              {/* Image */}
+            <Link key={p.id} to={`/properties/${p.id}`} className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[16/10] bg-muted overflow-hidden">
                 {p.images?.[0] ? (
-                  <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
+                  <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
                     <ImageIcon className="h-10 w-10" />
@@ -771,27 +756,12 @@ const BrowseHousesView = () => {
                 <p className="font-display font-bold text-lg mt-2 text-foreground">
                   Ksh {p.rent_amount.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/mo</span>
                 </p>
-                <div className="flex gap-3 text-xs text-muted-foreground mt-1 mb-3">
+                <div className="flex gap-3 text-xs text-muted-foreground mt-1">
                   <span className="flex items-center gap-1"><Bed className="h-3 w-3" /> {p.bedrooms} BR</span>
                   <span className="flex items-center gap-1"><Bath className="h-3 w-3" /> {p.bathrooms} BA</span>
                 </div>
-                {p.description && <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.description}</p>}
-
-                {inquiryPropId === p.id ? (
-                  <div className="space-y-2">
-                    <Textarea placeholder="Write your message..." value={message} onChange={(e) => setMessage(e.target.value)} />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={sendInquiry}>Send</Button>
-                      <Button size="sm" variant="ghost" onClick={() => setInquiryPropId(null)}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button size="sm" variant="outline" onClick={() => setInquiryPropId(p.id)} className="gap-1.5">
-                    <MessageSquare className="h-3 w-3" /> Enquire
-                  </Button>
-                )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
