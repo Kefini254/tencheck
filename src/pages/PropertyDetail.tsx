@@ -50,6 +50,19 @@ const PropertyDetail = () => {
     enabled: !!property?.landlord_id,
   });
 
+  const { data: landlordRecord } = useQuery({
+    queryKey: ["landlord-record", property?.landlord_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("landlords")
+        .select("verification_status")
+        .eq("user_id", property!.landlord_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!property?.landlord_id,
+  });
+
   const sendInquiry = async () => {
     if (!user) {
       toast.error("Please log in to send an inquiry");
