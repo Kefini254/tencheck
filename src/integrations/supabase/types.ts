@@ -14,16 +14,314 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      inquiries: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          property_id: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          property_id: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          property_id?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landlords: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      payment_evidence: {
+        Row: {
+          amount: number | null
+          created_at: string
+          evidence_type: string
+          id: string
+          payment_date: string | null
+          raw_text: string | null
+          receiver_name: string | null
+          tenant_id: string
+          transaction_code: string | null
+          verification_status: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          evidence_type?: string
+          id?: string
+          payment_date?: string | null
+          raw_text?: string | null
+          receiver_name?: string | null
+          tenant_id: string
+          transaction_code?: string | null
+          verification_status?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          evidence_type?: string
+          id?: string
+          payment_date?: string | null
+          raw_text?: string | null
+          receiver_name?: string | null
+          tenant_id?: string
+          transaction_code?: string | null
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          bathrooms: number
+          bedrooms: number
+          created_at: string
+          description: string | null
+          id: string
+          images: string[] | null
+          is_available: boolean
+          landlord_id: string
+          location: string
+          rent_amount: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number
+          bedrooms?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_available?: boolean
+          landlord_id: string
+          location: string
+          rent_amount: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number
+          bedrooms?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_available?: boolean
+          landlord_id?: string
+          location?: string
+          rent_amount?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rental_records: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_id: string
+          payment_date: string | null
+          payment_status: string
+          property_id: string | null
+          rent_amount: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_id: string
+          payment_date?: string | null
+          payment_status?: string
+          property_id?: string | null
+          rent_amount: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          landlord_id?: string
+          payment_date?: string | null
+          payment_status?: string
+          property_id?: string | null
+          rent_amount?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_records_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_scores: {
+        Row: {
+          last_updated: string
+          late_payments: number
+          missed_payments: number
+          score: number
+          tenant_id: string
+          total_payments: number
+          verified_sms_payments: number
+        }
+        Insert: {
+          last_updated?: string
+          late_payments?: number
+          missed_payments?: number
+          score?: number
+          tenant_id: string
+          total_payments?: number
+          verified_sms_payments?: number
+        }
+        Update: {
+          last_updated?: string
+          late_payments?: number
+          missed_payments?: number
+          score?: number
+          tenant_id?: string
+          total_payments?: number
+          verified_sms_payments?: number
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          national_id: string | null
+          phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          national_id?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          national_id?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_tenant_score: { Args: { _tenant_id: string }; Returns: number }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +448,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
