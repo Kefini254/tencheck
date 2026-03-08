@@ -1035,7 +1035,7 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
     setSubmitting(true);
 
     // Create worker profile
-    const { data: worker, error: workerErr } = await supabase
+    const { data: worker, error: workerErr } = await (supabase as any)
       .from("service_workers")
       .insert({
         name,
