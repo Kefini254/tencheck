@@ -1056,7 +1056,7 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
     }
 
     // Create endorsement
-    const { error: endorseErr } = await supabase
+    const { error: endorseErr } = await (supabase as any)
       .from("worker_endorsements")
       .insert({
         worker_id: worker.id,
