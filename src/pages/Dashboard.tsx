@@ -10,7 +10,7 @@ import {
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
   UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
-  TrendingDown, Users, Scale
+  TrendingDown, Users, Scale, Sparkles, Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +27,8 @@ import { TenantRiskPanel } from "@/components/dashboard/TenantRiskPanel";
 import { PropertyDemandPanel } from "@/components/dashboard/PropertyDemandPanel";
 import { TrustNetworkPanel } from "@/components/dashboard/TrustNetworkPanel";
 import { DisputeOverviewPanel } from "@/components/dashboard/DisputeOverviewPanel";
+import SharePassport from "@/components/dashboard/SharePassport";
+import AIMatchPanel from "@/components/dashboard/AIMatchPanel";
 
 type Tab = string;
 
@@ -69,6 +71,7 @@ const Dashboard = () => {
   const landlordTabs = [
     { id: "my-properties", icon: Building2, label: "Properties" },
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
+    { id: "ai-tenant-rank", icon: Sparkles, label: "AI Tenant Rank" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
     { id: "payment-overview", icon: CreditCard, label: "Payments" },
     { id: "tenant-risk", icon: TrendingDown, label: "Tenant Risk" },
@@ -81,7 +84,9 @@ const Dashboard = () => {
 
   const tenantTabs = [
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "ai-recommendations", icon: Sparkles, label: "AI Matches" },
     { id: "credit-passport", icon: Award, label: "Credit Passport" },
+    { id: "share-passport", icon: Share2, label: "Share Passport" },
     { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
     { id: "wallet", icon: Wallet, label: "Wallet" },
     { id: "financial-requests", icon: Banknote, label: "Financing" },
@@ -194,6 +199,7 @@ const Dashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
+                {role === "landlord" && activeTab === "ai-tenant-rank" && <LandlordAIRankView userId={user.id} />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
                 {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
                 {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
@@ -204,6 +210,8 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
+                {role === "tenant" && activeTab === "ai-recommendations" && <AIMatchPanel userId={user.id} mode="tenant" />}
+                {role === "tenant" && activeTab === "share-passport" && <SharePassport userId={user.id} />}
                 {role === "tenant" && activeTab === "credit-passport" && <CreditPassportCard userId={user.id} />}
                 {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "wallet" && (
@@ -824,8 +832,12 @@ const UploadProofView = () => {
     if (error) {
       toast.error("Failed to parse SMS");
     } else {
-      toast.success("Payment evidence submitted!");
-      setResult(data.parsed);
+      if (data.reconciled) {
+        toast.success(`Payment auto-matched to landlord: ${data.matched_landlord}!`);
+      } else {
+        toast.success("Payment evidence submitted!");
+      }
+      setResult({ ...data.parsed, reconciled: data.reconciled, matched_landlord: data.matched_landlord });
       setSmsText("");
     }
   };
@@ -880,6 +892,21 @@ const UploadProofView = () => {
               <p className="font-bold text-foreground">{result.payment_date ?? "N/A"}</p>
             </div>
           </div>
+          {result.reconciled && (
+            <div className="mt-3 rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-sm text-primary font-medium">
+                ✅ Auto-reconciled with landlord: {result.matched_landlord}
+              </p>
+            </div>
+          )}
+          {result.reconciled === false && (
+            <div className="mt-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3">
+              <p className="text-sm text-yellow-600">
+                Could not auto-match to a landlord. Evidence saved for manual review.
+              </p>
+            </div>
+          )}
         </motion.div>
       )}
     </div>
@@ -1265,6 +1292,56 @@ const LandlordTenantRiskView = () => {
         </div>
       </div>
       {tenantId && <TenantRiskPanel tenantId={tenantId} />}
+    </div>
+  );
+};
+
+const LandlordAIRankView = ({ userId }: { userId: string }) => {
+  const { data: properties, isLoading } = useQuery({
+    queryKey: ["my-properties-for-ai", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("id, title, location")
+        .eq("landlord_id", userId);
+      return data ?? [];
+    },
+  });
+
+  const [selectedProperty, setSelectedProperty] = useState<string>("");
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">AI Tenant Ranking</h2>
+            <p className="text-sm text-muted-foreground">Select a property to rank applicants</p>
+          </div>
+        </div>
+        {isLoading ? (
+          <div className="h-10 rounded-lg bg-muted animate-pulse" />
+        ) : properties?.length === 0 ? (
+          <p className="text-sm text-muted-foreground">List a property first to use AI ranking.</p>
+        ) : (
+          <select
+            className="flex h-10 w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={selectedProperty}
+            onChange={(e) => setSelectedProperty(e.target.value)}
+          >
+            <option value="">Select a property...</option>
+            {properties?.map((p) => (
+              <option key={p.id} value={p.id}>{p.title} — {p.location}</option>
+            ))}
+          </select>
+        )}
+      </div>
+      {selectedProperty && (
+        <AIMatchPanel userId={userId} mode="landlord" propertyId={selectedProperty} />
+      )}
     </div>
   );
 };

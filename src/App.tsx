@@ -14,6 +14,7 @@ import PropertyDetail from "./pages/PropertyDetail";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import TenantProfilePage from "./pages/TenantProfilePage";
+import PassportPublic from "./pages/PassportPublic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/services" element={<Services />} />
             <Route path="/my-profile" element={<TenantProfilePage />} />
+            <Route path="/passport/:tenantId" element={<PassportPublic />} />
             <Route path="/features" element={<Navigate to="/#features" replace />} />
             <Route path="/how-it-works" element={<Navigate to="/#how-it-works" replace />} />
             <Route path="*" element={<NotFound />} />
