@@ -12,6 +12,7 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [nationalId, setNationalId] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"tenant" | "landlord">("tenant");
   const [loading, setLoading] = useState(false);
@@ -79,6 +80,12 @@ const Signup = () => {
               <Label htmlFor="phone">Phone Number</Label>
               <Input id="phone" type="tel" placeholder="0712 345 678" value={phone} onChange={(e) => setPhone(e.target.value)} required />
             </div>
+            {role === "tenant" && (
+              <div className="space-y-2">
+                <Label htmlFor="nationalId">National ID</Label>
+                <Input id="nationalId" placeholder="12345678" value={nationalId} onChange={(e) => setNationalId(e.target.value)} />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />

@@ -9,7 +9,7 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck
+  UserCheck, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ImageUpload from "@/components/dashboard/ImageUpload";
+import { TenantProfileCard, ScoreGauge, ConfidenceBadge, PaymentTimeline, DisputeForm } from "@/components/dashboard/TenantProfile";
 
 type Tab = string;
 
@@ -68,7 +69,9 @@ const Dashboard = () => {
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
+    { id: "my-profile", icon: User, label: "My Profile" },
   ];
 
   const tabs = role === "landlord" ? landlordTabs : tenantTabs;
@@ -177,7 +180,13 @@ const Dashboard = () => {
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-profile" && (
+                  <div className="text-center py-8">
+                    <Button asChild><Link to="/my-profile">Open Full Profile</Link></Button>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -202,31 +211,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any; label:
   </button>
 );
 
-const ScoreGauge = ({ score }: { score: number }) => {
-  const circumference = 2 * Math.PI * 45;
-  const offset = circumference - (score / 100) * circumference;
-  const color =
-    score >= 70 ? "hsl(var(--primary))" : score >= 40 ? "hsl(45, 80%, 50%)" : "hsl(var(--destructive))";
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width="140" height="140" className="-rotate-90">
-        <circle cx="70" cy="70" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
-        <motion.circle
-          cx="70" cy="70" r="45" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        />
-      </svg>
-      <div className="absolute text-center">
-        <span className="font-display text-3xl font-bold text-foreground">{score}</span>
-        <span className="block text-xs text-muted-foreground">/ 100</span>
-      </div>
-    </div>
-  );
-};
+// ScoreGauge imported from TenantProfile component
 
 // ===== Landlord Views =====
 
@@ -245,11 +230,12 @@ const SearchTenantView = () => {
       .or(`national_id.eq.${query},phone.eq.${query}`)
       .maybeSingle();
 
-    if (tenant?.user_id) {
+    if (tenant) {
+      const tenantUserId = tenant.user_id || tenant.id;
       const { data: score } = await supabase
         .from("tenant_scores")
         .select("*")
-        .eq("tenant_id", tenant.user_id)
+        .eq("tenant_id", tenantUserId)
         .maybeSingle();
       setResult({ tenant, score });
     } else {
@@ -282,40 +268,14 @@ const SearchTenantView = () => {
             <Search className="h-4 w-4" /> {searching ? "..." : "Search"}
           </Button>
         </div>
-
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-6 border border-border rounded-xl bg-muted/30 flex flex-col sm:flex-row items-center gap-6"
-          >
-            <ScoreGauge score={result.score?.score ?? 100} />
-            <div className="text-center sm:text-left">
-              <h3 className="font-display font-bold text-xl text-foreground">{result.tenant.name}</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                ID: {result.tenant.national_id} • {result.tenant.phone}
-              </p>
-              <div className="flex gap-4 text-sm">
-                <StatPill label="Total" value={result.score?.total_payments ?? 0} />
-                <StatPill label="Late" value={result.score?.late_payments ?? 0} variant="warning" />
-                <StatPill label="Missed" value={result.score?.missed_payments ?? 0} variant="danger" />
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
+
+      {result && (
+        <TenantProfileCard tenant={result.tenant} score={result.score} />
+      )}
     </div>
   );
 };
-
-const StatPill = ({ label, value, variant }: { label: string; value: number; variant?: string }) => (
-  <div className="flex items-center gap-1.5 text-sm">
-    <span className="text-muted-foreground">{label}:</span>
-    <span className={`font-bold ${variant === "warning" ? "text-yellow-600" : variant === "danger" ? "text-destructive" : "text-foreground"}`}>
-      {value}
-    </span>
-  </div>
-);
 
 const ReportPaymentView = ({ userId }: { userId: string }) => {
   const [tenantPhone, setTenantPhone] = useState("");
@@ -908,7 +868,13 @@ const MyScoreView = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="font-display font-bold text-xl mb-6 text-foreground">Your Reputation Score</h2>
+        <h2 className="font-display font-bold text-xl mb-2 text-foreground">Your Reputation Score</h2>
+        <div className="mb-4">
+          <ConfidenceBadge level={(score as any)?.confidence_level || "low"} />
+          <span className="text-xs text-muted-foreground ml-2">
+            {(score as any)?.data_sources_count ?? 0} landlord(s) reporting
+          </span>
+        </div>
         <div className="flex flex-col sm:flex-row items-center gap-8">
           <ScoreGauge score={score?.score ?? 100} />
           <div className="grid grid-cols-2 gap-3 flex-1 w-full">
@@ -932,6 +898,12 @@ const MyScoreView = ({ userId }: { userId: string }) => {
         </div>
       </div>
 
+      {/* Payment Timeline */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h3 className="font-display font-bold mb-4 text-foreground">Payment Timeline</h3>
+        <PaymentTimeline tenantId={userId} />
+      </div>
+
       {evidence && evidence.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-6">
           <h3 className="font-display font-bold mb-4 text-foreground">Payment Evidence History</h3>
@@ -950,6 +922,28 @@ const MyScoreView = ({ userId }: { userId: string }) => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const MyDisputesView = ({ userId }: { userId: string }) => {
+  const { data: records } = useQuery({
+    queryKey: ["my-records-for-disputes", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("rental_records")
+        .select("*")
+        .eq("tenant_id", userId)
+        .order("payment_date", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <DisputeForm tenantId={userId} rentalRecords={records || []} />
+      </div>
     </div>
   );
 };
