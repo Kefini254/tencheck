@@ -832,8 +832,12 @@ const UploadProofView = () => {
     if (error) {
       toast.error("Failed to parse SMS");
     } else {
-      toast.success("Payment evidence submitted!");
-      setResult(data.parsed);
+      if (data.reconciled) {
+        toast.success(`Payment auto-matched to landlord: ${data.matched_landlord}!`);
+      } else {
+        toast.success("Payment evidence submitted!");
+      }
+      setResult({ ...data.parsed, reconciled: data.reconciled, matched_landlord: data.matched_landlord });
       setSmsText("");
     }
   };
