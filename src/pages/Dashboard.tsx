@@ -63,14 +63,18 @@ const Dashboard = () => {
     { id: "my-properties", icon: Building2, label: "Properties" },
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
+    { id: "payment-overview", icon: CreditCard, label: "Payments" },
     { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
     { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
   ];
 
   const tenantTabs = [
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
+    { id: "wallet", icon: Wallet, label: "Wallet" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "services", icon: Wifi, label: "Services" },
     { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
     { id: "my-profile", icon: User, label: "My Profile" },
