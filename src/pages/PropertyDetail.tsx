@@ -28,9 +28,10 @@ const PropertyDetail = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("properties")
-        .select("*, landlords!inner(verification_status, user_id)")
+        .select("*")
         .eq("id", id!)
         .single();
+      return data;
       return data;
     },
     enabled: !!id,

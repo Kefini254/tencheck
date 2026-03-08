@@ -221,7 +221,7 @@ const Properties = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paged.map((property: any, i: number) => {
-                const isVerifiedLandlord = property.landlords?.verification_status === "verified";
+                const isVerifiedLandlord = property.landlord?.verification_status === "verified";
                 return (
                   <motion.div
                     key={property.id}
