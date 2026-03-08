@@ -59,7 +59,7 @@ const Services = () => {
   const { data: workers, isLoading } = useQuery({
     queryKey: ["service-workers", selectedCategory, locationFilter],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("service_workers")
         .select("*, worker_endorsements(id, landlord_id, endorsement_notes)")
         .eq("verification_status", "verified")
