@@ -197,6 +197,7 @@ const Dashboard = () => {
                     <WalletDeposit userId={user.id} />
                   </div>
                 )}
+                {role === "tenant" && activeTab === "financial-requests" && <FinancialRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
