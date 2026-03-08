@@ -1017,6 +1017,7 @@ const TenantInquiriesView = ({ userId }: { userId: string }) => {
 };
 
 const SERVICE_CATEGORIES = [
+  "WiFi Installation",
   "Relocation Assistance", "Furniture Moving", "House Cleaning", "Deep Cleaning",
   "Landscaping", "Lawn Mowing", "Hedge Trimming", "Tree Pruning",
   "Waste Removal", "Interior Painting", "Exterior Painting", "Carpentry",
