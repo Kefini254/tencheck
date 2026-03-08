@@ -86,7 +86,6 @@ const Signup = () => {
                 <Input id="nationalId" placeholder="12345678" value={nationalId} onChange={(e) => setNationalId(e.target.value)} />
               </div>
             )}
-            </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
