@@ -624,7 +624,28 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
         .select("*, properties(title)")
         .in("property_id", propIds)
         .order("created_at", { ascending: false });
-      return data ?? [];
+
+      if (!data?.length) return [];
+
+      // Fetch tenant scores for each inquiry
+      const tenantIds = [...new Set(data.map((inq) => inq.tenant_id))];
+      const { data: scores } = await supabase
+        .from("tenant_scores")
+        .select("tenant_id, score, confidence_level")
+        .in("tenant_id", tenantIds);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, name")
+        .in("user_id", tenantIds);
+
+      const scoreMap = Object.fromEntries((scores ?? []).map((s) => [s.tenant_id, s]));
+      const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.user_id, p]));
+
+      return data.map((inq) => ({
+        ...inq,
+        tenant_score: scoreMap[inq.tenant_id],
+        tenant_profile: profileMap[inq.tenant_id],
+      }));
     },
   });
 
@@ -653,13 +674,31 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
         inquiries?.map((inq: any) => (
           <div key={inq.id} className="rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">{inq.properties?.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  From: {inq.tenant_profile?.name || "Unknown tenant"}
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
               </div>
-              <Badge variant={inq.status === "pending" ? "default" : "secondary"} className="shrink-0">
-                {inq.status}
-              </Badge>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <Badge variant={inq.status === "pending" ? "default" : "secondary"}>
+                  {inq.status}
+                </Badge>
+                {inq.tenant_score && (
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`font-bold ${
+                      inq.tenant_score.score >= 80 ? "text-primary" :
+                      inq.tenant_score.score >= 60 ? "text-yellow-600" : "text-destructive"
+                    }`}>
+                      Score: {inq.tenant_score.score}
+                    </span>
+                    <span className="text-muted-foreground capitalize">
+                      ({inq.tenant_score.confidence_level})
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))
@@ -671,36 +710,22 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
 // ===== Tenant Views =====
 
 const BrowseHousesView = () => {
-  const { user } = useAuth();
-  const [inquiryPropId, setInquiryPropId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-
   const { data: properties, isLoading } = useQuery({
     queryKey: ["all-properties"],
     queryFn: async () => {
-      const { data } = await supabase.from("properties").select("*").eq("is_available", true).order("created_at", { ascending: false });
+      const { data } = await supabase.from("properties").select("*").eq("is_available", true).order("created_at", { ascending: false }).limit(12);
       return data ?? [];
     },
   });
 
-  const sendInquiry = async () => {
-    if (!user || !inquiryPropId || !message.trim()) return;
-    const { error } = await supabase.from("inquiries").insert({
-      tenant_id: user.id,
-      property_id: inquiryPropId,
-      message,
-    });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Inquiry sent!");
-      setInquiryPropId(null);
-      setMessage("");
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <h2 className="font-display font-bold text-xl text-foreground">Available Properties</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-display font-bold text-xl text-foreground">Available Properties</h2>
+        <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <Link to="/properties"><Eye className="h-3.5 w-3.5" /> View All</Link>
+        </Button>
+      </div>
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />)}
@@ -713,11 +738,10 @@ const BrowseHousesView = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {properties?.map((p) => (
-            <div key={p.id} className="rounded-2xl border border-border bg-card overflow-hidden">
-              {/* Image */}
+            <Link key={p.id} to={`/properties/${p.id}`} className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[16/10] bg-muted overflow-hidden">
                 {p.images?.[0] ? (
-                  <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
+                  <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
                     <ImageIcon className="h-10 w-10" />
@@ -732,27 +756,12 @@ const BrowseHousesView = () => {
                 <p className="font-display font-bold text-lg mt-2 text-foreground">
                   Ksh {p.rent_amount.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/mo</span>
                 </p>
-                <div className="flex gap-3 text-xs text-muted-foreground mt-1 mb-3">
+                <div className="flex gap-3 text-xs text-muted-foreground mt-1">
                   <span className="flex items-center gap-1"><Bed className="h-3 w-3" /> {p.bedrooms} BR</span>
                   <span className="flex items-center gap-1"><Bath className="h-3 w-3" /> {p.bathrooms} BA</span>
                 </div>
-                {p.description && <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.description}</p>}
-
-                {inquiryPropId === p.id ? (
-                  <div className="space-y-2">
-                    <Textarea placeholder="Write your message..." value={message} onChange={(e) => setMessage(e.target.value)} />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={sendInquiry}>Send</Button>
-                      <Button size="sm" variant="ghost" onClick={() => setInquiryPropId(null)}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button size="sm" variant="outline" onClick={() => setInquiryPropId(p.id)} className="gap-1.5">
-                    <MessageSquare className="h-3 w-3" /> Enquire
-                  </Button>
-                )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
