@@ -199,6 +199,10 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
                 {role === "landlord" && activeTab === "endorse-worker" && <EndorseWorkerView userId={user.id} />}
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
+                {role === "landlord" && activeTab === "tenant-risk" && <LandlordTenantRiskView />}
+                {role === "landlord" && activeTab === "demand-insights" && <PropertyDemandPanel />}
+                {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
+                {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
                 {role === "tenant" && activeTab === "credit-passport" && <CreditPassportCard userId={user.id} />}
                 {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
