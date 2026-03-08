@@ -135,7 +135,7 @@ const Footer = () => {
 
       {/* Bottom bar */}
       <div className="border-t border-border">
-        <div className="container mx-auto px-4 py-5">
+        <div className="max-w-3xl mx-auto px-4 py-5">
           <p className="text-xs text-muted-foreground text-center">
             © 2026 TenCheck. All rights reserved.
           </p>
