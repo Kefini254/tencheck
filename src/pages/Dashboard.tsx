@@ -9,7 +9,7 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck
+  UserCheck, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ImageUpload from "@/components/dashboard/ImageUpload";
+import { TenantProfileCard, ScoreGauge, ConfidenceBadge, PaymentTimeline, DisputeForm } from "@/components/dashboard/TenantProfile";
 
 type Tab = string;
 
