@@ -9,7 +9,8 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award
+  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
+  TrendingDown, Users, Scale
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
