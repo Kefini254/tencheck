@@ -624,7 +624,28 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
         .select("*, properties(title)")
         .in("property_id", propIds)
         .order("created_at", { ascending: false });
-      return data ?? [];
+
+      if (!data?.length) return [];
+
+      // Fetch tenant scores for each inquiry
+      const tenantIds = [...new Set(data.map((inq) => inq.tenant_id))];
+      const { data: scores } = await supabase
+        .from("tenant_scores")
+        .select("tenant_id, score, confidence_level")
+        .in("tenant_id", tenantIds);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, name")
+        .in("user_id", tenantIds);
+
+      const scoreMap = Object.fromEntries((scores ?? []).map((s) => [s.tenant_id, s]));
+      const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.user_id, p]));
+
+      return data.map((inq) => ({
+        ...inq,
+        tenant_score: scoreMap[inq.tenant_id],
+        tenant_profile: profileMap[inq.tenant_id],
+      }));
     },
   });
 
@@ -653,13 +674,31 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
         inquiries?.map((inq: any) => (
           <div key={inq.id} className="rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">{inq.properties?.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  From: {inq.tenant_profile?.name || "Unknown tenant"}
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
               </div>
-              <Badge variant={inq.status === "pending" ? "default" : "secondary"} className="shrink-0">
-                {inq.status}
-              </Badge>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <Badge variant={inq.status === "pending" ? "default" : "secondary"}>
+                  {inq.status}
+                </Badge>
+                {inq.tenant_score && (
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`font-bold ${
+                      inq.tenant_score.score >= 80 ? "text-primary" :
+                      inq.tenant_score.score >= 60 ? "text-yellow-600" : "text-destructive"
+                    }`}>
+                      Score: {inq.tenant_score.score}
+                    </span>
+                    <span className="text-muted-foreground capitalize">
+                      ({inq.tenant_score.confidence_level})
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))
