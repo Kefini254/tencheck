@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      disputes: {
+        Row: {
+          created_at: string
+          dispute_reason: string
+          evidence_url: string | null
+          id: string
+          rental_record_id: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispute_reason: string
+          evidence_url?: string | null
+          id?: string
+          rental_record_id?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          dispute_reason?: string
+          evidence_url?: string | null
+          id?: string
+          rental_record_id?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_rental_record_id_fkey"
+            columns: ["rental_record_id"]
+            isOneToOne: false
+            referencedRelation: "rental_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           created_at: string
@@ -53,18 +91,24 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          phone_verified: boolean
+          property_count: number
           user_id: string
           verification_status: string
         }
         Insert: {
           created_at?: string
           id?: string
+          phone_verified?: boolean
+          property_count?: number
           user_id: string
           verification_status?: string
         }
         Update: {
           created_at?: string
           id?: string
+          phone_verified?: boolean
+          property_count?: number
           user_id?: string
           verification_status?: string
         }
@@ -314,6 +358,8 @@ export type Database = {
       }
       tenant_scores: {
         Row: {
+          confidence_level: string
+          data_sources_count: number
           last_updated: string
           late_payments: number
           missed_payments: number
@@ -323,6 +369,8 @@ export type Database = {
           verified_sms_payments: number
         }
         Insert: {
+          confidence_level?: string
+          data_sources_count?: number
           last_updated?: string
           late_payments?: number
           missed_payments?: number
@@ -332,6 +380,8 @@ export type Database = {
           verified_sms_payments?: number
         }
         Update: {
+          confidence_level?: string
+          data_sources_count?: number
           last_updated?: string
           late_payments?: number
           missed_payments?: number
@@ -345,26 +395,44 @@ export type Database = {
       tenants: {
         Row: {
           created_at: string
+          date_of_birth: string | null
+          full_name: string | null
           id: string
+          identity_verified: boolean
           name: string
           national_id: string | null
           phone: string | null
+          phone_verified: boolean
+          phone_verified_at: string | null
+          profile_photo_url: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          date_of_birth?: string | null
+          full_name?: string | null
           id?: string
+          identity_verified?: boolean
           name: string
           national_id?: string | null
           phone?: string | null
+          phone_verified?: boolean
+          phone_verified_at?: string | null
+          profile_photo_url?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          date_of_birth?: string | null
+          full_name?: string | null
           id?: string
+          identity_verified?: boolean
           name?: string
           national_id?: string | null
           phone?: string | null
+          phone_verified?: boolean
+          phone_verified_at?: string | null
+          profile_photo_url?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -425,6 +493,15 @@ export type Database = {
     }
     Functions: {
       calculate_tenant_score: { Args: { _tenant_id: string }; Returns: number }
+      find_or_create_tenant: {
+        Args: {
+          _name: string
+          _national_id: string
+          _phone: string
+          _user_id: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
