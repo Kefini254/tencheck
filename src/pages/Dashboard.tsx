@@ -9,7 +9,7 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi
+  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,8 @@ import ImageUpload from "@/components/dashboard/ImageUpload";
 import { TenantProfileCard, ScoreGauge, ConfidenceBadge, PaymentTimeline, DisputeForm } from "@/components/dashboard/TenantProfile";
 import { TenantPaymentPanel, LandlordPaymentOverview, WalletDeposit } from "@/components/dashboard/RentPaymentPanel";
 import { ServiceRequestPanel } from "@/components/dashboard/ServiceRequestPanel";
+import CreditPassportCard from "@/components/dashboard/CreditPassportCard";
+import FinancialRequestPanel from "@/components/dashboard/FinancialRequestPanel";
 
 type Tab = string;
 
@@ -70,8 +72,10 @@ const Dashboard = () => {
 
   const tenantTabs = [
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "credit-passport", icon: Award, label: "Credit Passport" },
     { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
     { id: "wallet", icon: Wallet, label: "Wallet" },
+    { id: "financial-requests", icon: Banknote, label: "Financing" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
     { id: "services", icon: Wifi, label: "Services" },
@@ -185,6 +189,7 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "endorse-worker" && <EndorseWorkerView userId={user.id} />}
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
+                {role === "tenant" && activeTab === "credit-passport" && <CreditPassportCard userId={user.id} />}
                 {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "wallet" && (
                   <div className="space-y-6">
@@ -192,6 +197,7 @@ const Dashboard = () => {
                     <WalletDeposit userId={user.id} />
                   </div>
                 )}
+                {role === "tenant" && activeTab === "financial-requests" && <FinancialRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
