@@ -230,11 +230,12 @@ const SearchTenantView = () => {
       .or(`national_id.eq.${query},phone.eq.${query}`)
       .maybeSingle();
 
-    if (tenant?.user_id) {
+    if (tenant) {
+      const tenantUserId = tenant.user_id || tenant.id;
       const { data: score } = await supabase
         .from("tenant_scores")
         .select("*")
-        .eq("tenant_id", tenant.user_id)
+        .eq("tenant_id", tenantUserId)
         .maybeSingle();
       setResult({ tenant, score });
     } else {
@@ -267,40 +268,14 @@ const SearchTenantView = () => {
             <Search className="h-4 w-4" /> {searching ? "..." : "Search"}
           </Button>
         </div>
-
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-6 border border-border rounded-xl bg-muted/30 flex flex-col sm:flex-row items-center gap-6"
-          >
-            <ScoreGauge score={result.score?.score ?? 100} />
-            <div className="text-center sm:text-left">
-              <h3 className="font-display font-bold text-xl text-foreground">{result.tenant.name}</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                ID: {result.tenant.national_id} • {result.tenant.phone}
-              </p>
-              <div className="flex gap-4 text-sm">
-                <StatPill label="Total" value={result.score?.total_payments ?? 0} />
-                <StatPill label="Late" value={result.score?.late_payments ?? 0} variant="warning" />
-                <StatPill label="Missed" value={result.score?.missed_payments ?? 0} variant="danger" />
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
+
+      {result && (
+        <TenantProfileCard tenant={result.tenant} score={result.score} />
+      )}
     </div>
   );
 };
-
-const StatPill = ({ label, value, variant }: { label: string; value: number; variant?: string }) => (
-  <div className="flex items-center gap-1.5 text-sm">
-    <span className="text-muted-foreground">{label}:</span>
-    <span className={`font-bold ${variant === "warning" ? "text-yellow-600" : variant === "danger" ? "text-destructive" : "text-foreground"}`}>
-      {value}
-    </span>
-  </div>
-);
 
 const ReportPaymentView = ({ userId }: { userId: string }) => {
   const [tenantPhone, setTenantPhone] = useState("");
