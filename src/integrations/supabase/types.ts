@@ -52,6 +52,39 @@ export type Database = {
           },
         ]
       }
+      financial_requests: {
+        Row: {
+          created_at: string
+          id: string
+          max_allowed_amount: number | null
+          purpose: string
+          requested_amount: number
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_allowed_amount?: number | null
+          purpose?: string
+          requested_amount: number
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_allowed_amount?: number | null
+          purpose?: string
+          requested_amount?: number
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inquiries: {
         Row: {
           created_at: string
@@ -406,6 +439,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_credit_passport: {
+        Row: {
+          confidence_level: string
+          created_at: string
+          credit_score: number
+          id: string
+          late_payments_count: number
+          missed_payments_count: number
+          tenant_id: string
+          total_service_requests_completed: number
+          total_verified_rent_payments: number
+          updated_at: string
+        }
+        Insert: {
+          confidence_level?: string
+          created_at?: string
+          credit_score?: number
+          id?: string
+          late_payments_count?: number
+          missed_payments_count?: number
+          tenant_id: string
+          total_service_requests_completed?: number
+          total_verified_rent_payments?: number
+          updated_at?: string
+        }
+        Update: {
+          confidence_level?: string
+          created_at?: string
+          credit_score?: number
+          id?: string
+          late_payments_count?: number
+          missed_payments_count?: number
+          tenant_id?: string
+          total_service_requests_completed?: number
+          total_verified_rent_payments?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenant_scores: {
         Row: {
           confidence_level: string
@@ -566,6 +638,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_credit_passport: {
+        Args: { _tenant_id: string }
+        Returns: number
+      }
       calculate_tenant_score: { Args: { _tenant_id: string }; Returns: number }
       find_or_create_tenant: {
         Args: {
