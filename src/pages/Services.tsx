@@ -14,6 +14,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 
 const SERVICE_CATEGORIES = [
+  "WiFi Installation",
   "Relocation Assistance", "Furniture Moving", "House Cleaning", "Deep Cleaning",
   "Landscaping", "Lawn Mowing", "Hedge Trimming", "Tree Pruning",
   "Waste Removal", "Interior Painting", "Exterior Painting", "Carpentry",
