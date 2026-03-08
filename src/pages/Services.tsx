@@ -25,6 +25,7 @@ const SERVICE_CATEGORIES = [
 ];
 
 const CATEGORY_ICONS: Record<string, any> = {
+  "WiFi Installation": Wifi,
   "Relocation Assistance": Truck,
   "Furniture Moving": Package,
   "House Cleaning": Sparkles,
