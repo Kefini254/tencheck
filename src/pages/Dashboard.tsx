@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
-  ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2
+  ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
+  UserCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
