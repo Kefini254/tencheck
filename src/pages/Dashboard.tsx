@@ -9,7 +9,7 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck, AlertTriangle, User
+  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ImageUpload from "@/components/dashboard/ImageUpload";
 import { TenantProfileCard, ScoreGauge, ConfidenceBadge, PaymentTimeline, DisputeForm } from "@/components/dashboard/TenantProfile";
+import { TenantPaymentPanel, LandlordPaymentOverview, WalletDeposit } from "@/components/dashboard/RentPaymentPanel";
+import { ServiceRequestPanel } from "@/components/dashboard/ServiceRequestPanel";
 
 type Tab = string;
 
@@ -61,14 +63,18 @@ const Dashboard = () => {
     { id: "my-properties", icon: Building2, label: "Properties" },
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
+    { id: "payment-overview", icon: CreditCard, label: "Payments" },
     { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
     { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
   ];
 
   const tenantTabs = [
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
+    { id: "wallet", icon: Wallet, label: "Wallet" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "services", icon: Wifi, label: "Services" },
     { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
     { id: "my-profile", icon: User, label: "My Profile" },
@@ -175,11 +181,20 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
                 {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
+                {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
                 {role === "landlord" && activeTab === "endorse-worker" && <EndorseWorkerView userId={user.id} />}
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
+                {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
+                {role === "tenant" && activeTab === "wallet" && (
+                  <div className="space-y-6">
+                    <TenantPaymentPanel userId={user.id} />
+                    <WalletDeposit userId={user.id} />
+                  </div>
+                )}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
+                {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
@@ -1002,6 +1017,7 @@ const TenantInquiriesView = ({ userId }: { userId: string }) => {
 };
 
 const SERVICE_CATEGORIES = [
+  "WiFi Installation",
   "Relocation Assistance", "Furniture Moving", "House Cleaning", "Deep Cleaning",
   "Landscaping", "Lawn Mowing", "Hedge Trimming", "Tree Pruning",
   "Waste Removal", "Interior Painting", "Exterior Painting", "Carpentry",

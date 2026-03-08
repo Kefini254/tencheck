@@ -1,4 +1,7 @@
 project_id = "iuledmffqgjjcwjfvxns"
 
 [functions.parse-sms]
-verify_jwt = true
+verify_jwt = false
+
+[functions.record-payment]
+verify_jwt = false

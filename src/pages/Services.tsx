@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Search, MapPin, Star, Phone, Shield, ChevronDown,
   Truck, Sparkles, TreePine, Paintbrush, Wrench, Bug,
-  Hammer, Droplets, Zap, Scissors, Package, Home,
+  Hammer, Droplets, Zap, Scissors, Package, Home, Wifi,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 
 const SERVICE_CATEGORIES = [
+  "WiFi Installation",
   "Relocation Assistance", "Furniture Moving", "House Cleaning", "Deep Cleaning",
   "Landscaping", "Lawn Mowing", "Hedge Trimming", "Tree Pruning",
   "Waste Removal", "Interior Painting", "Exterior Painting", "Carpentry",
@@ -24,6 +25,7 @@ const SERVICE_CATEGORIES = [
 ];
 
 const CATEGORY_ICONS: Record<string, any> = {
+  "WiFi Installation": Wifi,
   "Relocation Assistance": Truck,
   "Furniture Moving": Package,
   "House Cleaning": Sparkles,
@@ -40,6 +42,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 const FEATURED_CATEGORIES = [
+  { name: "WiFi Installation", icon: Wifi, color: "bg-indigo-500/10 text-indigo-600" },
   { name: "House Cleaning", icon: Sparkles, color: "bg-blue-500/10 text-blue-600" },
   { name: "Plumbing", icon: Droplets, color: "bg-cyan-500/10 text-cyan-600" },
   { name: "Electrical Repair", icon: Zap, color: "bg-yellow-500/10 text-yellow-600" },
