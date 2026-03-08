@@ -1277,4 +1277,54 @@ const LandlordTenantRiskView = () => {
   );
 };
 
+const LandlordAIRankView = ({ userId }: { userId: string }) => {
+  const { data: properties, isLoading } = useQuery({
+    queryKey: ["my-properties-for-ai", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("id, title, location")
+        .eq("landlord_id", userId);
+      return data ?? [];
+    },
+  });
+
+  const [selectedProperty, setSelectedProperty] = useState<string>("");
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">AI Tenant Ranking</h2>
+            <p className="text-sm text-muted-foreground">Select a property to rank applicants</p>
+          </div>
+        </div>
+        {isLoading ? (
+          <div className="h-10 rounded-lg bg-muted animate-pulse" />
+        ) : properties?.length === 0 ? (
+          <p className="text-sm text-muted-foreground">List a property first to use AI ranking.</p>
+        ) : (
+          <select
+            className="flex h-10 w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={selectedProperty}
+            onChange={(e) => setSelectedProperty(e.target.value)}
+          >
+            <option value="">Select a property...</option>
+            {properties?.map((p) => (
+              <option key={p.id} value={p.id}>{p.title} — {p.location}</option>
+            ))}
+          </select>
+        )}
+      </div>
+      {selectedProperty && (
+        <AIMatchPanel userId={userId} mode="landlord" propertyId={selectedProperty} />
+      )}
+    </div>
+  );
+};
+
 export default Dashboard;
