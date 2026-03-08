@@ -20,6 +20,8 @@ import ImageUpload from "@/components/dashboard/ImageUpload";
 import { TenantProfileCard, ScoreGauge, ConfidenceBadge, PaymentTimeline, DisputeForm } from "@/components/dashboard/TenantProfile";
 import { TenantPaymentPanel, LandlordPaymentOverview, WalletDeposit } from "@/components/dashboard/RentPaymentPanel";
 import { ServiceRequestPanel } from "@/components/dashboard/ServiceRequestPanel";
+import CreditPassportCard from "@/components/dashboard/CreditPassportCard";
+import FinancialRequestPanel from "@/components/dashboard/FinancialRequestPanel";
 
 type Tab = string;
 
