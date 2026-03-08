@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
-  Shield, Search, Home, Upload, BarChart3, MessageSquare, Users,
-  LogOut, Menu, X, FileText, AlertTriangle, Plus
+  Shield, Search, Home, Upload, BarChart3, MessageSquare,
+  LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
+  ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ImageUpload from "@/components/dashboard/ImageUpload";
 
 type Tab = string;
 
@@ -25,21 +28,22 @@ const Dashboard = () => {
   const role = profile?.role || "tenant";
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    }
+    if (!loading && !user) navigate("/login");
   }, [loading, user, navigate]);
 
   useEffect(() => {
-    if (role === "landlord") setActiveTab("search-tenant");
+    if (role === "landlord") setActiveTab("my-properties");
     else if (role === "tenant") setActiveTab("browse-houses");
     else setActiveTab("search-tenant");
   }, [role]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary/30">
-        <div className="animate-pulse font-display text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -51,67 +55,129 @@ const Dashboard = () => {
     navigate("/");
   };
 
+  const landlordTabs = [
+    { id: "my-properties", icon: Building2, label: "Properties" },
+    { id: "search-tenant", icon: Search, label: "Search Tenant" },
+    { id: "report-payment", icon: FileText, label: "Report Payment" },
+    { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
+  ];
+
+  const tenantTabs = [
+    { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "upload-proof", icon: Upload, label: "Upload Proof" },
+    { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
+  ];
+
+  const tabs = role === "landlord" ? landlordTabs : tenantTabs;
+
   return (
-    <div className="min-h-screen bg-secondary/30 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform lg:translate-x-0 lg:static ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-          <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
-            <Shield className="h-5 w-5 text-primary" />
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-[260px] bg-card border-r border-border flex flex-col transform transition-transform duration-200 lg:translate-x-0 lg:static ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between h-16 px-5 border-b border-border shrink-0">
+          <Link to="/" className="flex items-center gap-2.5 font-display text-lg font-bold text-foreground">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <Shield className="h-4 w-4 text-primary-foreground" />
+            </div>
             TenCheck
           </Link>
-          <button className="lg:hidden" onClick={() => setSidebarOpen(false)}><X className="h-5 w-5" /></button>
+          <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(false)}>
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="p-3 border-b border-border">
-          <p className="text-sm font-medium truncate">{profile?.name || "User"}</p>
-          <p className="text-xs text-muted-foreground capitalize">{role}</p>
+        {/* Profile */}
+        <div className="px-5 py-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center shrink-0">
+              <span className="font-display font-bold text-sm text-accent-foreground">
+                {(profile?.name || "U").charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate text-foreground">{profile?.name || "User"}</p>
+              <Badge variant="secondary" className="text-[10px] font-medium capitalize mt-0.5">
+                {role}
+              </Badge>
+            </div>
+          </div>
         </div>
 
-        <nav className="p-3 space-y-1">
-          {role === "landlord" && (
-            <>
-              <SidebarItem icon={Search} label="Search Tenant" active={activeTab === "search-tenant"} onClick={() => setActiveTab("search-tenant")} />
-              <SidebarItem icon={FileText} label="Report Payment" active={activeTab === "report-payment"} onClick={() => setActiveTab("report-payment")} />
-              <SidebarItem icon={Home} label="My Properties" active={activeTab === "my-properties"} onClick={() => setActiveTab("my-properties")} />
-              <SidebarItem icon={MessageSquare} label="Inquiries" active={activeTab === "inquiries"} onClick={() => setActiveTab("inquiries")} />
-            </>
-          )}
-          {role === "tenant" && (
-            <>
-              <SidebarItem icon={Home} label="Browse Houses" active={activeTab === "browse-houses"} onClick={() => setActiveTab("browse-houses")} />
-              <SidebarItem icon={Upload} label="Upload Proof" active={activeTab === "upload-proof"} onClick={() => setActiveTab("upload-proof")} />
-              <SidebarItem icon={BarChart3} label="My Score" active={activeTab === "my-score"} onClick={() => setActiveTab("my-score")} />
-              <SidebarItem icon={MessageSquare} label="My Inquiries" active={activeTab === "my-inquiries"} onClick={() => setActiveTab("my-inquiries")} />
-            </>
-          )}
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-2">
+            Menu
+          </p>
+          {tabs.map((tab) => (
+            <SidebarItem
+              key={tab.id}
+              icon={tab.icon}
+              label={tab.label}
+              active={activeTab === tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSidebarOpen(false);
+              }}
+            />
+          ))}
         </nav>
 
-        <div className="absolute bottom-4 left-0 right-0 px-3">
-          <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleSignOut}>
+        {/* Sign out */}
+        <div className="px-3 py-4 border-t border-border shrink-0">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            onClick={handleSignOut}
+          >
             <LogOut className="h-4 w-4" /> Sign Out
           </Button>
         </div>
       </aside>
 
-      {sidebarOpen && <div className="fixed inset-0 z-40 bg-foreground/20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-      {/* Main */}
-      <main className="flex-1 min-w-0">
-        <header className="h-16 border-b border-border bg-card flex items-center px-4 gap-4">
-          <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu className="h-5 w-5" /></button>
-          <h1 className="font-display font-semibold text-lg capitalize">{role} Dashboard</h1>
+      {/* Main Content */}
+      <main className="flex-1 min-w-0 flex flex-col">
+        <header className="h-16 border-b border-border bg-card flex items-center px-4 sm:px-6 gap-4 shrink-0">
+          <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="font-display font-bold text-lg text-foreground">
+              {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
+            </h1>
+          </div>
         </header>
 
-        <div className="p-6">
-          {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
-          {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
-          {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
-          {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
-          {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
-          {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
-          {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
-          {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
+                {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
+                {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
+                {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
+                {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
+                {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
+                {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
+                {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </main>
     </div>
@@ -119,23 +185,32 @@ const Dashboard = () => {
 };
 
 const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any; label: string; active?: boolean; onClick?: () => void }) => (
-  <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-    <Icon className="h-4 w-4" />
-    {label}
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+      active
+        ? "bg-primary/10 text-primary shadow-sm"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+    }`}
+  >
+    <Icon className="h-4 w-4 shrink-0" />
+    <span className="truncate">{label}</span>
+    {active && <ChevronRight className="h-3.5 w-3.5 ml-auto shrink-0 opacity-60" />}
   </button>
 );
 
 const ScoreGauge = ({ score }: { score: number }) => {
   const circumference = 2 * Math.PI * 45;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 70 ? "hsl(152, 60%, 36%)" : score >= 40 ? "hsl(45, 80%, 50%)" : "hsl(0, 72%, 51%)";
+  const color =
+    score >= 70 ? "hsl(var(--primary))" : score >= 40 ? "hsl(45, 80%, 50%)" : "hsl(var(--destructive))";
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <svg width="120" height="120" className="-rotate-90">
-        <circle cx="60" cy="60" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
+      <svg width="140" height="140" className="-rotate-90">
+        <circle cx="70" cy="70" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
         <motion.circle
-          cx="60" cy="60" r="45" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
+          cx="70" cy="70" r="45" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
@@ -143,19 +218,12 @@ const ScoreGauge = ({ score }: { score: number }) => {
         />
       </svg>
       <div className="absolute text-center">
-        <span className="font-display text-2xl font-bold">{score}</span>
+        <span className="font-display text-3xl font-bold text-foreground">{score}</span>
         <span className="block text-xs text-muted-foreground">/ 100</span>
       </div>
     </div>
   );
 };
-
-const StatCard = ({ label, value }: { label: string; value: string }) => (
-  <div className="glass-card rounded-xl p-5">
-    <p className="text-sm text-muted-foreground mb-1">{label}</p>
-    <p className="font-display text-2xl font-bold">{value}</p>
-  </div>
-);
 
 // ===== Landlord Views =====
 
@@ -167,7 +235,7 @@ const SearchTenantView = () => {
   const handleSearch = async () => {
     if (!query.trim()) return;
     setSearching(true);
-    
+
     const { data: tenant } = await supabase
       .from("tenants")
       .select("*")
@@ -180,7 +248,6 @@ const SearchTenantView = () => {
         .select("*")
         .eq("tenant_id", tenant.user_id)
         .maybeSingle();
-
       setResult({ tenant, score });
     } else {
       setResult(null);
@@ -191,35 +258,61 @@ const SearchTenantView = () => {
 
   return (
     <div className="space-y-6">
-      <div className="glass-card rounded-2xl p-6">
-        <h2 className="font-display font-semibold text-lg mb-4">Search Tenant</h2>
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent">
+            <Search className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">Search Tenant</h2>
+            <p className="text-sm text-muted-foreground">Look up a tenant by National ID or phone</p>
+          </div>
+        </div>
         <div className="flex gap-3 max-w-md">
-          <Input placeholder="National ID or phone number" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <Button className="gap-2" onClick={handleSearch} disabled={searching}>
+          <Input
+            placeholder="National ID or phone number"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <Button className="gap-2 shrink-0" onClick={handleSearch} disabled={searching}>
             <Search className="h-4 w-4" /> {searching ? "..." : "Search"}
           </Button>
         </div>
 
         {result && (
-          <div className="mt-6 p-6 border border-border rounded-xl flex flex-col sm:flex-row items-center gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-6 border border-border rounded-xl bg-muted/30 flex flex-col sm:flex-row items-center gap-6"
+          >
             <ScoreGauge score={result.score?.score ?? 100} />
-            <div>
-              <h3 className="font-display font-semibold text-lg">{result.tenant.name}</h3>
-              <p className="text-sm text-muted-foreground mb-2">
+            <div className="text-center sm:text-left">
+              <h3 className="font-display font-bold text-xl text-foreground">{result.tenant.name}</h3>
+              <p className="text-sm text-muted-foreground mb-3">
                 ID: {result.tenant.national_id} • {result.tenant.phone}
               </p>
               <div className="flex gap-4 text-sm">
-                <span>Total: <strong>{result.score?.total_payments ?? 0}</strong></span>
-                <span>Late: <strong>{result.score?.late_payments ?? 0}</strong></span>
-                <span>Missed: <strong>{result.score?.missed_payments ?? 0}</strong></span>
+                <StatPill label="Total" value={result.score?.total_payments ?? 0} />
+                <StatPill label="Late" value={result.score?.late_payments ?? 0} variant="warning" />
+                <StatPill label="Missed" value={result.score?.missed_payments ?? 0} variant="danger" />
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
   );
 };
+
+const StatPill = ({ label, value, variant }: { label: string; value: number; variant?: string }) => (
+  <div className="flex items-center gap-1.5 text-sm">
+    <span className="text-muted-foreground">{label}:</span>
+    <span className={`font-bold ${variant === "warning" ? "text-yellow-600" : variant === "danger" ? "text-destructive" : "text-foreground"}`}>
+      {value}
+    </span>
+  </div>
+);
 
 const ReportPaymentView = ({ userId }: { userId: string }) => {
   const [tenantPhone, setTenantPhone] = useState("");
@@ -261,33 +354,43 @@ const ReportPaymentView = ({ userId }: { userId: string }) => {
   };
 
   return (
-    <div className="glass-card rounded-2xl p-6 max-w-md">
-      <h2 className="font-display font-semibold text-lg mb-4">Report Tenant Payment</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label>Tenant Phone</Label>
-          <Input placeholder="0712 345 678" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} required />
+    <div className="max-w-lg">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent">
+            <FileText className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">Report Payment</h2>
+            <p className="text-sm text-muted-foreground">Record a tenant's rent payment status</p>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Amount (Ksh)</Label>
-          <Input type="number" placeholder="12000" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-        </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="paid">Paid On Time</option>
-            <option value="late">Late</option>
-            <option value="missed">Missed</option>
-          </select>
-        </div>
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Reporting..." : "Report Payment"}
-        </Button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Tenant Phone</Label>
+            <Input placeholder="0712 345 678" value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Amount (Ksh)</Label>
+            <Input type="number" placeholder="12000" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="paid">Paid On Time</option>
+              <option value="late">Late</option>
+              <option value="missed">Missed</option>
+            </select>
+          </div>
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting ? "Reporting..." : "Report Payment"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };
@@ -301,6 +404,7 @@ const MyPropertiesView = ({ userId }: { userId: string }) => {
   const [rent, setRent] = useState("");
   const [bedrooms, setBedrooms] = useState("1");
   const [bathrooms, setBathrooms] = useState("1");
+  const [images, setImages] = useState<string[]>([]);
 
   const { data: properties, isLoading } = useQuery({
     queryKey: ["my-properties", userId],
@@ -324,6 +428,7 @@ const MyPropertiesView = ({ userId }: { userId: string }) => {
         rent_amount: parseInt(rent),
         bedrooms: parseInt(bedrooms),
         bathrooms: parseInt(bathrooms),
+        images,
       });
       if (error) throw error;
     },
@@ -331,59 +436,212 @@ const MyPropertiesView = ({ userId }: { userId: string }) => {
       toast.success("Property listed!");
       queryClient.invalidateQueries({ queryKey: ["my-properties"] });
       setShowForm(false);
-      setTitle(""); setDescription(""); setLocation(""); setRent("");
+      resetForm();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setLocation("");
+    setRent("");
+    setBedrooms("1");
+    setBathrooms("1");
+    setImages([]);
+  };
+
+  const deleteProperty = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("properties").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Property removed");
+      queryClient.invalidateQueries({ queryKey: ["my-properties"] });
     },
     onError: (err: any) => toast.error(err.message),
   });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-display font-semibold text-lg">My Properties</h2>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-display font-bold text-xl text-foreground">My Properties</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {properties?.length ?? 0} {(properties?.length ?? 0) === 1 ? "property" : "properties"} listed
+          </p>
+        </div>
         <Button className="gap-2" onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-4 w-4" /> Add Property
+          {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          {showForm ? "Cancel" : "Add Property"}
         </Button>
       </div>
 
-      {showForm && (
-        <div className="glass-card rounded-2xl p-6">
-          <form onSubmit={(e) => { e.preventDefault(); createProperty.mutate(); }} className="space-y-4 max-w-lg">
-            <div className="space-y-2"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Modern 2BR Apartment" required /></div>
-            <div className="space-y-2"><Label>Location</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Kilimani, Nairobi" required /></div>
-            <div className="space-y-2"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the property..." /></div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2"><Label>Rent (Ksh)</Label><Input type="number" value={rent} onChange={(e) => setRent(e.target.value)} required /></div>
-              <div className="space-y-2"><Label>Bedrooms</Label><Input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Bathrooms</Label><Input type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} /></div>
-            </div>
-            <Button type="submit" disabled={createProperty.isPending}>
-              {createProperty.isPending ? "Listing..." : "List Property"}
-            </Button>
-          </form>
-        </div>
-      )}
+      {/* Add Property Form */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h3 className="font-display font-bold text-lg mb-5 text-foreground">New Property Listing</h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  createProperty.mutate();
+                }}
+                className="space-y-5"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Modern 2BR Apartment" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Location</Label>
+                    <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Kilimani, Nairobi" required />
+                  </div>
+                </div>
 
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe the property, amenities, nearby facilities..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Rent (Ksh)</Label>
+                    <Input type="number" value={rent} onChange={(e) => setRent(e.target.value)} placeholder="25,000" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bedrooms</Label>
+                    <Input type="number" min="0" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bathrooms</Label>
+                    <Input type="number" min="0" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Image Upload */}
+                <ImageUpload images={images} onImagesChange={setImages} maxImages={10} />
+
+                <div className="flex gap-3 pt-2">
+                  <Button type="submit" disabled={createProperty.isPending} className="gap-2">
+                    {createProperty.isPending ? "Listing..." : "List Property"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Properties Grid */}
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />
+          ))}
+        </div>
       ) : properties?.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No properties listed yet.</p>
+        <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
+          <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="font-display font-semibold text-foreground">No properties yet</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">List your first property to start receiving inquiries</p>
+          <Button onClick={() => setShowForm(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Add Property
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {properties?.map((p) => (
-            <div key={p.id} className="glass-card rounded-xl p-5">
-              <h3 className="font-display font-semibold">{p.title}</h3>
-              <p className="text-sm text-muted-foreground">{p.location}</p>
-              <p className="font-display font-bold mt-2">Ksh {p.rent_amount.toLocaleString()}/mo</p>
-              <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                <span>{p.bedrooms} BR</span>
-                <span>{p.bathrooms} BA</span>
-                <span className={p.is_available ? "text-primary" : "text-destructive"}>{p.is_available ? "Available" : "Taken"}</span>
-              </div>
-            </div>
+            <PropertyCard key={p.id} property={p} onDelete={(id) => deleteProperty.mutate(id)} />
           ))}
         </div>
       )}
     </div>
+  );
+};
+
+const PropertyCard = ({ property: p, onDelete }: { property: any; onDelete: (id: string) => void }) => {
+  const coverImage = p.images?.[0];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+    >
+      {/* Image */}
+      <div className="relative aspect-[16/10] bg-muted overflow-hidden">
+        {coverImage ? (
+          <img src={coverImage} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground/40">
+            <ImageIcon className="h-10 w-10" />
+            <span className="text-xs">No photos</span>
+          </div>
+        )}
+        {p.images?.length > 1 && (
+          <span className="absolute bottom-2 right-2 text-xs font-medium px-2 py-1 rounded-md bg-foreground/70 text-background backdrop-blur-sm">
+            {p.images.length} photos
+          </span>
+        )}
+        <Badge
+          className={`absolute top-3 left-3 ${
+            p.is_available
+              ? "bg-primary/90 text-primary-foreground hover:bg-primary"
+              : "bg-destructive/90 text-destructive-foreground hover:bg-destructive"
+          }`}
+        >
+          {p.is_available ? "Available" : "Taken"}
+        </Badge>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-display font-bold text-foreground truncate">{p.title}</h3>
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{p.location}</span>
+            </p>
+          </div>
+          <button
+            onClick={() => onDelete(p.id)}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+          <p className="font-display font-bold text-lg text-foreground">
+            Ksh {p.rent_amount.toLocaleString()}
+            <span className="text-xs font-normal text-muted-foreground">/mo</span>
+          </p>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Bed className="h-3.5 w-3.5" /> {p.bedrooms}</span>
+            <span className="flex items-center gap-1"><Bath className="h-3.5 w-3.5" /> {p.bathrooms}</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
@@ -409,19 +667,40 @@ const LandlordInquiriesView = ({ userId }: { userId: string }) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display font-semibold text-lg">Inquiries</h2>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> :
-        inquiries?.length === 0 ? <p className="text-sm text-muted-foreground">No inquiries yet.</p> :
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2.5 rounded-xl bg-accent">
+          <MessageSquare className="h-5 w-5 text-accent-foreground" />
+        </div>
+        <div>
+          <h2 className="font-display font-bold text-lg text-foreground">Inquiries</h2>
+          <p className="text-sm text-muted-foreground">{inquiries?.length ?? 0} messages from tenants</p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />)}
+        </div>
+      ) : inquiries?.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
+          <MessageSquare className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No inquiries yet</p>
+        </div>
+      ) : (
         inquiries?.map((inq: any) => (
-          <div key={inq.id} className="glass-card rounded-xl p-5">
-            <p className="text-sm font-medium">{inq.properties?.title}</p>
-            <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
-            <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${inq.status === 'pending' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}>
-              {inq.status}
-            </span>
+          <div key={inq.id} className="rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{inq.properties?.title}</p>
+                <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
+              </div>
+              <Badge variant={inq.status === "pending" ? "default" : "secondary"} className="shrink-0">
+                {inq.status}
+              </Badge>
+            </div>
           </div>
         ))
-      }
+      )}
     </div>
   );
 };
@@ -458,35 +737,62 @@ const BrowseHousesView = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display font-semibold text-lg">Available Properties</h2>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> :
-        properties?.length === 0 ? <p className="text-sm text-muted-foreground">No properties available.</p> :
-        properties?.map((p) => (
-          <div key={p.id} className="glass-card rounded-xl p-5">
-            <h3 className="font-display font-semibold">{p.title}</h3>
-            <p className="text-sm text-muted-foreground">{p.location}</p>
-            <p className="font-display font-bold mt-1">Ksh {p.rent_amount.toLocaleString()}/mo</p>
-            <div className="flex gap-3 text-xs text-muted-foreground mt-1 mb-3">
-              <span>{p.bedrooms} BR</span><span>{p.bathrooms} BA</span>
-            </div>
-            {p.description && <p className="text-sm text-muted-foreground mb-3">{p.description}</p>}
-
-            {inquiryPropId === p.id ? (
-              <div className="space-y-2">
-                <Textarea placeholder="Write your message..." value={message} onChange={(e) => setMessage(e.target.value)} />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={sendInquiry}>Send</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setInquiryPropId(null)}>Cancel</Button>
-                </div>
+      <h2 className="font-display font-bold text-xl text-foreground">Available Properties</h2>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />)}
+        </div>
+      ) : properties?.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
+          <Home className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No properties available right now</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {properties?.map((p) => (
+            <div key={p.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+              {/* Image */}
+              <div className="aspect-[16/10] bg-muted overflow-hidden">
+                {p.images?.[0] ? (
+                  <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+                    <ImageIcon className="h-10 w-10" />
+                  </div>
+                )}
               </div>
-            ) : (
-              <Button size="sm" variant="outline" onClick={() => setInquiryPropId(p.id)}>
-                <MessageSquare className="h-3 w-3 mr-1" /> Enquire
-              </Button>
-            )}
-          </div>
-        ))
-      }
+              <div className="p-4">
+                <h3 className="font-display font-bold text-foreground">{p.title}</h3>
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" /> {p.location}
+                </p>
+                <p className="font-display font-bold text-lg mt-2 text-foreground">
+                  Ksh {p.rent_amount.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/mo</span>
+                </p>
+                <div className="flex gap-3 text-xs text-muted-foreground mt-1 mb-3">
+                  <span className="flex items-center gap-1"><Bed className="h-3 w-3" /> {p.bedrooms} BR</span>
+                  <span className="flex items-center gap-1"><Bath className="h-3 w-3" /> {p.bathrooms} BA</span>
+                </div>
+                {p.description && <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.description}</p>}
+
+                {inquiryPropId === p.id ? (
+                  <div className="space-y-2">
+                    <Textarea placeholder="Write your message..." value={message} onChange={(e) => setMessage(e.target.value)} />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={sendInquiry}>Send</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setInquiryPropId(null)}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => setInquiryPropId(p.id)} className="gap-1.5">
+                    <MessageSquare className="h-3 w-3" /> Enquire
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -516,13 +822,18 @@ const UploadProofView = () => {
 
   return (
     <div className="space-y-6 max-w-lg">
-      <div className="glass-card rounded-2xl p-6">
-        <h2 className="font-display font-semibold text-lg mb-4">Upload M-Pesa Payment Proof</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Paste your M-Pesa confirmation SMS below. Our system will automatically extract payment details.
-        </p>
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent">
+            <Upload className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">Upload M-Pesa Proof</h2>
+            <p className="text-sm text-muted-foreground">Paste your confirmation SMS to verify payment</p>
+          </div>
+        </div>
         <Textarea
-          placeholder="Confirmed. Ksh 12000 sent to John Kamau. Transaction ID QJK123ABC Date 7/3/2026"
+          placeholder='Confirmed. Ksh 12000 sent to John Kamau. Transaction ID QJK123ABC Date 7/3/2026'
           value={smsText}
           onChange={(e) => setSmsText(e.target.value)}
           rows={5}
@@ -535,15 +846,31 @@ const UploadProofView = () => {
       </div>
 
       {result && (
-        <div className="glass-card rounded-2xl p-6">
-          <h3 className="font-display font-semibold mb-3">Parsed Results</h3>
-          <div className="space-y-2 text-sm">
-            <p>Amount: <strong>Ksh {result.amount?.toLocaleString() ?? "N/A"}</strong></p>
-            <p>Transaction Code: <strong>{result.transaction_code ?? "N/A"}</strong></p>
-            <p>Receiver: <strong>{result.receiver_name ?? "N/A"}</strong></p>
-            <p>Date: <strong>{result.payment_date ?? "N/A"}</strong></p>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-border bg-card p-6"
+        >
+          <h3 className="font-display font-bold mb-3 text-foreground">Parsed Results</h3>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-muted-foreground text-xs">Amount</p>
+              <p className="font-bold text-foreground">Ksh {result.amount?.toLocaleString() ?? "N/A"}</p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-muted-foreground text-xs">Transaction Code</p>
+              <p className="font-bold text-foreground">{result.transaction_code ?? "N/A"}</p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-muted-foreground text-xs">Receiver</p>
+              <p className="font-bold text-foreground">{result.receiver_name ?? "N/A"}</p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-muted-foreground text-xs">Date</p>
+              <p className="font-bold text-foreground">{result.payment_date ?? "N/A"}</p>
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -577,32 +904,44 @@ const MyScoreView = ({ userId }: { userId: string }) => {
 
   return (
     <div className="space-y-6">
-      <div className="glass-card rounded-2xl p-6">
-        <h2 className="font-display font-semibold text-lg mb-4">Your Reputation Score</h2>
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="font-display font-bold text-xl mb-6 text-foreground">Your Reputation Score</h2>
+        <div className="flex flex-col sm:flex-row items-center gap-8">
           <ScoreGauge score={score?.score ?? 100} />
-          <div className="space-y-2 text-sm">
-            <p>Total Payments: <strong>{score?.total_payments ?? 0}</strong></p>
-            <p>Late Payments: <strong>{score?.late_payments ?? 0}</strong></p>
-            <p>Missed Payments: <strong>{score?.missed_payments ?? 0}</strong></p>
-            <p>Verified SMS Payments: <strong>{score?.verified_sms_payments ?? 0}</strong></p>
+          <div className="grid grid-cols-2 gap-3 flex-1 w-full">
+            <div className="rounded-xl bg-muted/50 p-4 text-center">
+              <p className="text-2xl font-display font-bold text-foreground">{score?.total_payments ?? 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total Payments</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 p-4 text-center">
+              <p className="text-2xl font-display font-bold text-foreground">{score?.verified_sms_payments ?? 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">Verified SMS</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 p-4 text-center">
+              <p className="text-2xl font-display font-bold text-yellow-600">{score?.late_payments ?? 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">Late</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 p-4 text-center">
+              <p className="text-2xl font-display font-bold text-destructive">{score?.missed_payments ?? 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">Missed</p>
+            </div>
           </div>
         </div>
       </div>
 
       {evidence && evidence.length > 0 && (
-        <div className="glass-card rounded-2xl p-6">
-          <h3 className="font-display font-semibold mb-4">Payment Evidence History</h3>
-          <div className="space-y-3">
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h3 className="font-display font-bold mb-4 text-foreground">Payment Evidence History</h3>
+          <div className="space-y-2">
             {evidence.map((e) => (
-              <div key={e.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div key={e.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
                 <div>
-                  <p className="text-sm font-medium">Ksh {e.amount?.toLocaleString() ?? "—"} → {e.receiver_name ?? "Unknown"}</p>
+                  <p className="text-sm font-medium text-foreground">Ksh {e.amount?.toLocaleString() ?? "—"} → {e.receiver_name ?? "Unknown"}</p>
                   <p className="text-xs text-muted-foreground">{e.transaction_code} • {e.payment_date ?? "—"}</p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${e.verification_status === 'verified' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}>
+                <Badge variant={e.verification_status === "verified" ? "default" : "secondary"}>
                   {e.verification_status}
-                </span>
+                </Badge>
               </div>
             ))}
           </div>
@@ -627,19 +966,31 @@ const TenantInquiriesView = ({ userId }: { userId: string }) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display font-semibold text-lg">My Inquiries</h2>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> :
-        inquiries?.length === 0 ? <p className="text-sm text-muted-foreground">No inquiries yet.</p> :
+      <h2 className="font-display font-bold text-xl text-foreground">My Inquiries</h2>
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />)}
+        </div>
+      ) : inquiries?.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
+          <MessageSquare className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No inquiries yet</p>
+        </div>
+      ) : (
         inquiries?.map((inq: any) => (
-          <div key={inq.id} className="glass-card rounded-xl p-5">
-            <p className="text-sm font-medium">{inq.properties?.title} — {inq.properties?.location}</p>
-            <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
-            <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${inq.status === 'pending' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}>
-              {inq.status}
-            </span>
+          <div key={inq.id} className="rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{inq.properties?.title} — {inq.properties?.location}</p>
+                <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
+              </div>
+              <Badge variant={inq.status === "pending" ? "default" : "secondary"} className="shrink-0">
+                {inq.status}
+              </Badge>
+            </div>
           </div>
         ))
-      }
+      )}
     </div>
   );
 };
