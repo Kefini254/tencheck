@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/services" element={<Services />} />
             <Route path="/my-profile" element={<TenantProfilePage />} />
+            <Route path="/passport/:tenantId" element={<PassportPublic />} />
             <Route path="/features" element={<Navigate to="/#features" replace />} />
             <Route path="/how-it-works" element={<Navigate to="/#how-it-works" replace />} />
             <Route path="*" element={<NotFound />} />
