@@ -22,6 +22,10 @@ import { TenantPaymentPanel, LandlordPaymentOverview, WalletDeposit } from "@/co
 import { ServiceRequestPanel } from "@/components/dashboard/ServiceRequestPanel";
 import CreditPassportCard from "@/components/dashboard/CreditPassportCard";
 import FinancialRequestPanel from "@/components/dashboard/FinancialRequestPanel";
+import { TenantRiskPanel } from "@/components/dashboard/TenantRiskPanel";
+import { PropertyDemandPanel } from "@/components/dashboard/PropertyDemandPanel";
+import { TrustNetworkPanel } from "@/components/dashboard/TrustNetworkPanel";
+import { DisputeOverviewPanel } from "@/components/dashboard/DisputeOverviewPanel";
 
 type Tab = string;
 
