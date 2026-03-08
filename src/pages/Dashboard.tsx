@@ -1021,7 +1021,7 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
   const { data: endorsedWorkers, isLoading } = useQuery({
     queryKey: ["endorsed-workers", userId],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("worker_endorsements")
         .select("*, service_workers(*)")
         .eq("landlord_id", userId)
@@ -1035,7 +1035,7 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
     setSubmitting(true);
 
     // Create worker profile
-    const { data: worker, error: workerErr } = await (supabase as any)
+    const { data: worker, error: workerErr } = await supabase
       .from("service_workers")
       .insert({
         name,
@@ -1056,7 +1056,7 @@ const EndorseWorkerView = ({ userId }: { userId: string }) => {
     }
 
     // Create endorsement
-    const { error: endorseErr } = await (supabase as any)
+    const { error: endorseErr } = await supabase
       .from("worker_endorsements")
       .insert({
         worker_id: worker.id,
