@@ -87,6 +87,8 @@ const Dashboard = () => {
     { id: "financial-requests", icon: Banknote, label: "Financing" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
+    { id: "my-risk", icon: TrendingDown, label: "My Risk Score" },
+    { id: "trust-connections", icon: Users, label: "Trust Network" },
     { id: "services", icon: Wifi, label: "Services" },
     { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
