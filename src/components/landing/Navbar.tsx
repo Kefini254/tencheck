@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { Menu, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const { user, profile } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
@@ -16,14 +18,23 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-          <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+          <a href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+          <a href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
           <Link to="/properties" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Find Houses</Link>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" asChild><Link to="/login">Log In</Link></Button>
-          <Button asChild><Link to="/signup">Get Started</Link></Button>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground">{profile?.name || user.email}</span>
+              <Button asChild><Link to="/dashboard">Dashboard</Link></Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" asChild><Link to="/login">Log In</Link></Button>
+              <Button asChild><Link to="/signup">Get Started</Link></Button>
+            </>
+          )}
         </div>
 
         <button className="md:hidden" onClick={() => setOpen(!open)}>
@@ -40,12 +51,18 @@ const Navbar = () => {
             className="md:hidden border-t border-border bg-background"
           >
             <div className="container mx-auto p-4 flex flex-col gap-3">
-              <a href="#features" className="text-sm py-2" onClick={() => setOpen(false)}>Features</a>
-              <a href="#how-it-works" className="text-sm py-2" onClick={() => setOpen(false)}>How It Works</a>
+              <a href="/#features" className="text-sm py-2" onClick={() => setOpen(false)}>Features</a>
+              <a href="/#how-it-works" className="text-sm py-2" onClick={() => setOpen(false)}>How It Works</a>
               <Link to="/properties" className="text-sm py-2" onClick={() => setOpen(false)}>Find Houses</Link>
               <hr className="border-border" />
-              <Button variant="ghost" asChild className="justify-start"><Link to="/login">Log In</Link></Button>
-              <Button asChild><Link to="/signup">Get Started</Link></Button>
+              {user ? (
+                <Button asChild><Link to="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link></Button>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild className="justify-start"><Link to="/login">Log In</Link></Button>
+                  <Button asChild><Link to="/signup">Get Started</Link></Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
