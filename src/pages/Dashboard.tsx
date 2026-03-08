@@ -60,6 +60,7 @@ const Dashboard = () => {
     { id: "my-properties", icon: Building2, label: "Properties" },
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
+    { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
     { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
   ];
 
