@@ -199,6 +199,7 @@ const Dashboard = () => {
                 transition={{ duration: 0.2 }}
               >
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
+                {role === "landlord" && activeTab === "ai-tenant-rank" && <LandlordAIRankView userId={user.id} />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
                 {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
                 {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
