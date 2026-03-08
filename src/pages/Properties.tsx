@@ -30,10 +30,22 @@ const Properties = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("properties")
-        .select("*, landlords!inner(verification_status)")
+        .select("*")
         .eq("is_available", true)
         .order("created_at", { ascending: false });
-      return data ?? [];
+      
+      // Fetch landlord verification statuses
+      const properties = data ?? [];
+      if (properties.length === 0) return [];
+      
+      const landlordIds = [...new Set(properties.map((p) => p.landlord_id))];
+      const { data: landlords } = await supabase
+        .from("landlords")
+        .select("user_id, verification_status")
+        .in("user_id", landlordIds);
+      
+      const landlordMap = Object.fromEntries((landlords ?? []).map((l) => [l.user_id, l]));
+      return properties.map((p) => ({ ...p, landlord: landlordMap[p.landlord_id] }));
     },
   });
 
