@@ -892,6 +892,21 @@ const UploadProofView = () => {
               <p className="font-bold text-foreground">{result.payment_date ?? "N/A"}</p>
             </div>
           </div>
+          {result.reconciled && (
+            <div className="mt-3 rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-sm text-primary font-medium">
+                ✅ Auto-reconciled with landlord: {result.matched_landlord}
+              </p>
+            </div>
+          )}
+          {result.reconciled === false && (
+            <div className="mt-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3">
+              <p className="text-sm text-yellow-600">
+                Could not auto-match to a landlord. Evidence saved for manual review.
+              </p>
+            </div>
+          )}
         </motion.div>
       )}
     </div>
