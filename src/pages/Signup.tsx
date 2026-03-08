@@ -80,6 +80,13 @@ const Signup = () => {
               <Label htmlFor="phone">Phone Number</Label>
               <Input id="phone" type="tel" placeholder="0712 345 678" value={phone} onChange={(e) => setPhone(e.target.value)} required />
             </div>
+            {role === "tenant" && (
+              <div className="space-y-2">
+                <Label htmlFor="nationalId">National ID</Label>
+                <Input id="nationalId" placeholder="12345678" value={nationalId} onChange={(e) => setNationalId(e.target.value)} />
+              </div>
+            )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
