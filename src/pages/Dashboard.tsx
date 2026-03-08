@@ -203,31 +203,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any; label:
   </button>
 );
 
-const ScoreGauge = ({ score }: { score: number }) => {
-  const circumference = 2 * Math.PI * 45;
-  const offset = circumference - (score / 100) * circumference;
-  const color =
-    score >= 70 ? "hsl(var(--primary))" : score >= 40 ? "hsl(45, 80%, 50%)" : "hsl(var(--destructive))";
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width="140" height="140" className="-rotate-90">
-        <circle cx="70" cy="70" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
-        <motion.circle
-          cx="70" cy="70" r="45" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        />
-      </svg>
-      <div className="absolute text-center">
-        <span className="font-display text-3xl font-bold text-foreground">{score}</span>
-        <span className="block text-xs text-muted-foreground">/ 100</span>
-      </div>
-    </div>
-  );
-};
+// ScoreGauge imported from TenantProfile component
 
 // ===== Landlord Views =====
 
