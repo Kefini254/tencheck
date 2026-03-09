@@ -14,7 +14,7 @@ const Signup = () => {
   const [phone, setPhone] = useState("");
   const [nationalId, setNationalId] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"tenant" | "landlord">("tenant");
+  const [role, setRole] = useState<"tenant" | "landlord" | "service_worker">("tenant");
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
