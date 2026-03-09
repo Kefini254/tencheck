@@ -24,7 +24,17 @@ const Login = () => {
       toast.error(error.message);
     } else {
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      // Check profile role to redirect appropriately
+      const { data: prof } = await (await import("@/integrations/supabase/client")).supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", (await (await import("@/integrations/supabase/client")).supabase.auth.getUser()).data.user?.id || "")
+        .maybeSingle();
+      if (prof?.role === "service_worker") {
+        navigate("/worker-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     }
   };
 

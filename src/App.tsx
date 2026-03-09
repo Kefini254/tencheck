@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Properties from "./pages/Properties";
 import PropertyDetail from "./pages/PropertyDetail";
 import Dashboard from "./pages/Dashboard";
+import ServiceWorkerDashboard from "./pages/ServiceWorkerDashboard";
 import Services from "./pages/Services";
 import TenantProfilePage from "./pages/TenantProfilePage";
 import PassportPublic from "./pages/PassportPublic";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/properties" element={<Properties />} />
             <Route path="/properties/:id" element={<PropertyDetail />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/worker-dashboard" element={<ServiceWorkerDashboard />} />
             <Route path="/services" element={<Services />} />
             <Route path="/my-profile" element={<TenantProfilePage />} />
             <Route path="/passport/:tenantId" element={<PassportPublic />} />
