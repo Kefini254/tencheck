@@ -412,27 +412,102 @@ export type Database = {
           description: string | null
           id: string
           location: string
+          rating: number | null
           requester_id: string
+          review: string | null
+          scheduled_date: string | null
           service_category: string
           status: string
+          worker_id: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           location: string
+          rating?: number | null
           requester_id: string
+          review?: string | null
+          scheduled_date?: string | null
           service_category: string
           status?: string
+          worker_id?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           location?: string
+          rating?: number | null
           requester_id?: string
+          review?: string | null
+          scheduled_date?: string | null
           service_category?: string
           status?: string
+          worker_id?: string | null
+        }
+        Relationships: []
+      }
+      service_worker_profiles: {
+        Row: {
+          availability_status: string
+          city: string | null
+          created_at: string
+          description: string | null
+          id: string
+          identity_document_url: string | null
+          jobs_completed: number | null
+          landlord_endorsements_count: number | null
+          latitude: number | null
+          longitude: number | null
+          phone_verified: boolean | null
+          rating_score: number | null
+          service_category: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+          visibility_status: string
+          years_experience: number | null
+        }
+        Insert: {
+          availability_status?: string
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          identity_document_url?: string | null
+          jobs_completed?: number | null
+          landlord_endorsements_count?: number | null
+          latitude?: number | null
+          longitude?: number | null
+          phone_verified?: boolean | null
+          rating_score?: number | null
+          service_category: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+          visibility_status?: string
+          years_experience?: number | null
+        }
+        Update: {
+          availability_status?: string
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          identity_document_url?: string | null
+          jobs_completed?: number | null
+          landlord_endorsements_count?: number | null
+          latitude?: number | null
+          longitude?: number | null
+          phone_verified?: boolean | null
+          rating_score?: number | null
+          service_category?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          visibility_status?: string
+          years_experience?: number | null
         }
         Relationships: []
       }
@@ -749,6 +824,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      worker_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number
+          review_text: string | null
+          reviewer_id: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          reviewer_id: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_id?: string
+          worker_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

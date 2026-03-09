@@ -14,7 +14,7 @@ const Signup = () => {
   const [phone, setPhone] = useState("");
   const [nationalId, setNationalId] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"tenant" | "landlord">("tenant");
+  const [role, setRole] = useState<"tenant" | "landlord" | "service_worker">("tenant");
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -51,20 +51,16 @@ const Signup = () => {
           </div>
 
           <div className="flex rounded-xl bg-muted p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => setRole("tenant")}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === "tenant" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
-            >
-              I'm a Tenant
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole("landlord")}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === "landlord" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
-            >
-              I'm a Landlord
-            </button>
+            {(["tenant", "landlord", "service_worker"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${role === r ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
+              >
+                {r === "tenant" ? "Tenant" : r === "landlord" ? "Landlord" : "Service Worker"}
+              </button>
+            ))}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

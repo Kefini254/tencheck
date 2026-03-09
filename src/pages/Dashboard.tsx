@@ -42,7 +42,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!loading && !user) navigate("/login");
-  }, [loading, user, navigate]);
+    if (!loading && user && role === "service_worker") navigate("/worker-dashboard");
+  }, [loading, user, navigate, role]);
 
   useEffect(() => {
     if (role === "landlord") setActiveTab("my-properties");
