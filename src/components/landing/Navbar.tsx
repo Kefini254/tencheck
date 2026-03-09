@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Shield } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import tenCheckLogo from "@/assets/tencheck-logo.png";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -12,9 +13,8 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold">
-          <Shield className="h-6 w-6 text-primary" />
-          TenCheck
+        <Link to="/" className="flex items-center gap-2">
+          <img src={tenCheckLogo} alt="TenCheck" className="h-8" />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

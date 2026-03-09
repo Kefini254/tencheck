@@ -1,5 +1,6 @@
-import { Shield, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import tenCheckLogo from "@/assets/tencheck-logo.png";
 
 const Footer = () => {
   return (
@@ -8,11 +9,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
           {/* Column 1: Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <Shield className="h-4 w-4 text-primary-foreground" />
-              </div>
-              TenCheck
+            <Link to="/" className="flex items-center gap-2">
+              <img src={tenCheckLogo} alt="TenCheck" className="h-8" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               TenCheck helps landlords verify tenant rent payment behavior and connects property owners with trusted service workers for property maintenance and relocation support.
