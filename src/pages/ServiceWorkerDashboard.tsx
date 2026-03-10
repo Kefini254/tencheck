@@ -191,6 +191,8 @@ const ServiceWorkerDashboard = () => {
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 {activeTab === "overview" && <ProfileOverview profile={workerProfile} />}
+                {activeTab === "messages" && <MessagingHub userId={user.id} userRole="service_worker" />}
+                {activeTab === "notifications" && <NotificationsPanel userId={user.id} />}
                 {activeTab === "incoming" && <IncomingJobs userId={user.id} workerProfile={workerProfile} />}
                 {activeTab === "active" && <ActiveJobs userId={user.id} />}
                 {activeTab === "history" && <JobHistory userId={user.id} />}
