@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Shield, LogOut, Menu, X, ChevronRight, Wrench, Briefcase,
   Clock, History, Settings, Star, MapPin, Phone, Upload,
-  CheckCircle, XCircle, User, Eye, EyeOff, Wifi
+  CheckCircle, XCircle, User, Eye, EyeOff, Wifi,
+  MessageSquare, Bell, AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenCheckLogo from "@/assets/tencheck-logo.png";
+import { MessagingHub } from "@/components/dashboard/MessagingHub";
+import { NotificationsPanel, NotificationBell } from "@/components/dashboard/NotificationsPanel";
 
 const SERVICE_CATEGORIES = [
   "Plumbing", "Electrical Repair", "House Cleaning", "Furniture Moving",
@@ -23,7 +26,7 @@ const SERVICE_CATEGORIES = [
   "WiFi Installation", "General Handyman", "Landscaping", "Relocation Assistance",
 ];
 
-type Tab = "overview" | "incoming" | "active" | "history" | "settings";
+type Tab = "overview" | "incoming" | "active" | "history" | "messages" | "notifications" | "settings";
 
 const ServiceWorkerDashboard = () => {
   const { user, profile, loading, signOut } = useAuth();
@@ -114,6 +117,8 @@ const ServiceWorkerDashboard = () => {
 
   const tabs: { id: Tab; icon: any; label: string }[] = [
     { id: "overview", icon: User, label: "Profile Overview" },
+    { id: "messages", icon: MessageSquare, label: "Messages" },
+    { id: "notifications", icon: Bell, label: "Notifications" },
     { id: "incoming", icon: Briefcase, label: "Incoming Jobs" },
     { id: "active", icon: Clock, label: "Active Jobs" },
     { id: "history", icon: History, label: "Job History" },
@@ -186,6 +191,8 @@ const ServiceWorkerDashboard = () => {
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 {activeTab === "overview" && <ProfileOverview profile={workerProfile} />}
+                {activeTab === "messages" && <MessagingHub userId={user.id} userRole="service_worker" />}
+                {activeTab === "notifications" && <NotificationsPanel userId={user.id} />}
                 {activeTab === "incoming" && <IncomingJobs userId={user.id} workerProfile={workerProfile} />}
                 {activeTab === "active" && <ActiveJobs userId={user.id} />}
                 {activeTab === "history" && <JobHistory userId={user.id} />}

@@ -135,6 +135,45 @@ export type Database = {
           },
         ]
       }
+      landlord_profiles: {
+        Row: {
+          average_tenant_rating: number | null
+          complaint_count: number | null
+          created_at: string
+          id: string
+          maintenance_responsiveness_score: number | null
+          profile_visibility: string
+          tenant_satisfaction_score: number | null
+          updated_at: string
+          user_id: string
+          verified_properties: number | null
+        }
+        Insert: {
+          average_tenant_rating?: number | null
+          complaint_count?: number | null
+          created_at?: string
+          id?: string
+          maintenance_responsiveness_score?: number | null
+          profile_visibility?: string
+          tenant_satisfaction_score?: number | null
+          updated_at?: string
+          user_id: string
+          verified_properties?: number | null
+        }
+        Update: {
+          average_tenant_rating?: number | null
+          complaint_count?: number | null
+          created_at?: string
+          id?: string
+          maintenance_responsiveness_score?: number | null
+          profile_visibility?: string
+          tenant_satisfaction_score?: number | null
+          updated_at?: string
+          user_id?: string
+          verified_properties?: number | null
+        }
+        Relationships: []
+      }
       landlords: {
         Row: {
           created_at: string
@@ -161,6 +200,141 @@ export type Database = {
           verification_status?: string
         }
         Relationships: []
+      }
+      message_attachments: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_type: string
+          id: string
+          message_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_type?: string
+          id?: string
+          message_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          message_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          message_type: string
+          read_status: boolean
+          receiver_id: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          sender_id: string
+          thread_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          read_status?: boolean
+          receiver_id?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sender_id: string
+          thread_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          read_status?: boolean
+          receiver_id?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sender_id?: string
+          thread_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          message_id: string | null
+          notification_type: string
+          read_status: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          notification_type?: string
+          read_status?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          notification_type?: string
+          read_status?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_evidence: {
         Row: {
@@ -406,6 +580,115 @@ export type Database = {
           },
         ]
       }
+      review_disputes: {
+        Row: {
+          created_at: string
+          dispute_status: string
+          id: string
+          reason: string
+          reported_by: string
+          review_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispute_status?: string
+          id?: string
+          reason: string
+          reported_by: string
+          review_id: string
+        }
+        Update: {
+          created_at?: string
+          dispute_status?: string
+          id?: string
+          reason?: string
+          reported_by?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_disputes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "tenancy_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_credit_purchases: {
+        Row: {
+          created_at: string
+          credits_purchased: number
+          id: string
+          payment_amount: number
+          payment_method: string
+          transaction_code: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_purchased?: number
+          id?: string
+          payment_amount?: number
+          payment_method?: string
+          transaction_code?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_purchased?: number
+          id?: string
+          payment_amount?: number
+          payment_method?: string
+          transaction_code?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      service_request_deposits: {
+        Row: {
+          created_at: string
+          deposit_amount: number
+          deposit_status: string
+          id: string
+          payment_method: string
+          request_id: string
+          requester_id: string
+          transaction_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_amount?: number
+          deposit_status?: string
+          id?: string
+          payment_method?: string
+          request_id: string
+          requester_id: string
+          transaction_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_amount?: number
+          deposit_status?: string
+          id?: string
+          payment_method?: string
+          request_id?: string
+          requester_id?: string
+          transaction_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_deposits_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_requests: {
         Row: {
           created_at: string
@@ -561,6 +844,97 @@ export type Database = {
           verification_status?: string
         }
         Relationships: []
+      }
+      tenancy_records: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_id: string
+          lease_end_date: string | null
+          lease_start_date: string | null
+          monthly_rent: number
+          property_id: string | null
+          tenancy_status: string
+          tenant_id: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_id: string
+          lease_end_date?: string | null
+          lease_start_date?: string | null
+          monthly_rent?: number
+          property_id?: string | null
+          tenancy_status?: string
+          tenant_id: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          landlord_id?: string
+          lease_end_date?: string | null
+          lease_start_date?: string | null
+          monthly_rent?: number
+          property_id?: string | null
+          tenancy_status?: string
+          tenant_id?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenancy_records_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenancy_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          review_type: string
+          reviewee_id: string
+          reviewer_id: string
+          tenancy_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          review_type?: string
+          reviewee_id: string
+          reviewer_id: string
+          tenancy_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          review_type?: string
+          reviewee_id?: string
+          reviewer_id?: string
+          tenancy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenancy_reviews_tenancy_id_fkey"
+            columns: ["tenancy_id"]
+            isOneToOne: false
+            referencedRelation: "tenancy_records"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_credit_passport: {
         Row: {
@@ -745,6 +1119,85 @@ export type Database = {
         }
         Relationships: []
       }
+      thread_participants: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          thread_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          thread_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          thread_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_participants_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      threads: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_id: string | null
+          property_id: string | null
+          service_worker_id: string | null
+          subject: string | null
+          tenant_id: string | null
+          thread_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_id?: string | null
+          property_id?: string | null
+          service_worker_id?: string | null
+          subject?: string | null
+          tenant_id?: string | null
+          thread_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          landlord_id?: string | null
+          property_id?: string | null
+          service_worker_id?: string | null
+          subject?: string | null
+          tenant_id?: string | null
+          thread_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trust_network: {
         Row: {
           created_at: string
@@ -790,6 +1243,63 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_service_credits: {
+        Row: {
+          created_at: string
+          credits_remaining: number
+          id: string
+          last_reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_remaining?: number
+          id?: string
+          last_reset_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_remaining?: number
+          id?: string
+          last_reset_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      worker_complaints: {
+        Row: {
+          complaint_type: string
+          created_at: string
+          description: string
+          id: string
+          requester_id: string
+          status: string
+          worker_id: string
+        }
+        Insert: {
+          complaint_type?: string
+          created_at?: string
+          description: string
+          id?: string
+          requester_id: string
+          status?: string
+          worker_id: string
+        }
+        Update: {
+          complaint_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          requester_id?: string
+          status?: string
+          worker_id?: string
         }
         Relationships: []
       }

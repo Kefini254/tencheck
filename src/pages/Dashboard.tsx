@@ -10,7 +10,7 @@ import {
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
   UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
-  TrendingDown, Users, Scale, Sparkles, Share2
+  TrendingDown, Users, Scale, Sparkles, Share2, Bell, Coins, Flag, ClipboardList
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +29,11 @@ import { TrustNetworkPanel } from "@/components/dashboard/TrustNetworkPanel";
 import { DisputeOverviewPanel } from "@/components/dashboard/DisputeOverviewPanel";
 import SharePassport from "@/components/dashboard/SharePassport";
 import AIMatchPanel from "@/components/dashboard/AIMatchPanel";
+import { MessagingHub } from "@/components/dashboard/MessagingHub";
+import { NotificationsPanel, NotificationBell } from "@/components/dashboard/NotificationsPanel";
+import { LandlordTenancyManager, TenantTenancyView } from "@/components/dashboard/TenancyManager";
+import { ServiceCreditsPanel } from "@/components/dashboard/ServiceCreditsPanel";
+import { FileWorkerComplaint } from "@/components/dashboard/WorkerComplaintsPanel";
 
 type Tab = string;
 
@@ -71,6 +76,9 @@ const Dashboard = () => {
 
   const landlordTabs = [
     { id: "my-properties", icon: Building2, label: "Properties" },
+    { id: "messages", icon: MessageSquare, label: "Messages" },
+    { id: "notifications", icon: Bell, label: "Notifications" },
+    { id: "tenancy-records", icon: ClipboardList, label: "Tenancies" },
     { id: "search-tenant", icon: Search, label: "Search Tenant" },
     { id: "ai-tenant-rank", icon: Sparkles, label: "AI Tenant Rank" },
     { id: "report-payment", icon: FileText, label: "Report Payment" },
@@ -85,17 +93,22 @@ const Dashboard = () => {
 
   const tenantTabs = [
     { id: "browse-houses", icon: Home, label: "Browse Houses" },
+    { id: "messages", icon: MessageSquare, label: "Messages" },
+    { id: "notifications", icon: Bell, label: "Notifications" },
+    { id: "tenancies", icon: ClipboardList, label: "My Tenancies" },
     { id: "ai-recommendations", icon: Sparkles, label: "AI Matches" },
     { id: "credit-passport", icon: Award, label: "Credit Passport" },
     { id: "share-passport", icon: Share2, label: "Share Passport" },
     { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
     { id: "wallet", icon: Wallet, label: "Wallet" },
     { id: "financial-requests", icon: Banknote, label: "Financing" },
+    { id: "service-credits", icon: Coins, label: "Service Credits" },
     { id: "upload-proof", icon: Upload, label: "Upload Proof" },
     { id: "my-score", icon: BarChart3, label: "My Score" },
     { id: "my-risk", icon: TrendingDown, label: "My Risk Score" },
     { id: "trust-connections", icon: Users, label: "Trust Network" },
     { id: "services", icon: Wifi, label: "Services" },
+    { id: "worker-complaint", icon: Flag, label: "Report Worker" },
     { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
     { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
     { id: "my-profile", icon: User, label: "My Profile" },
@@ -178,15 +191,16 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
-        <header className="h-16 border-b border-border bg-card flex items-center px-4 sm:px-6 gap-4 shrink-0">
-          <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </button>
-          <div>
+        <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 sm:px-6 shrink-0">
+          <div className="flex items-center gap-4">
+            <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </button>
             <h1 className="font-display font-bold text-lg text-foreground">
               {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
             </h1>
           </div>
+          <NotificationBell userId={user.id} onClick={() => setActiveTab("notifications")} />
         </header>
 
         <div className="flex-1 overflow-y-auto">
@@ -199,6 +213,11 @@ const Dashboard = () => {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* Shared tabs */}
+                {activeTab === "messages" && <MessagingHub userId={user.id} userRole={role} />}
+                {activeTab === "notifications" && <NotificationsPanel userId={user.id} />}
+
+                {/* Landlord tabs */}
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
                 {role === "landlord" && activeTab === "ai-tenant-rank" && <LandlordAIRankView userId={user.id} />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
@@ -210,6 +229,9 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "demand-insights" && <PropertyDemandPanel />}
                 {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
+                {role === "landlord" && activeTab === "tenancy-records" && <LandlordTenancyManager userId={user.id} />}
+
+                {/* Tenant tabs */}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
                 {role === "tenant" && activeTab === "ai-recommendations" && <AIMatchPanel userId={user.id} mode="tenant" />}
                 {role === "tenant" && activeTab === "share-passport" && <SharePassport userId={user.id} />}
@@ -222,12 +244,15 @@ const Dashboard = () => {
                   </div>
                 )}
                 {role === "tenant" && activeTab === "financial-requests" && <FinancialRequestPanel userId={user.id} />}
+                {role === "tenant" && activeTab === "service-credits" && <ServiceCreditsPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-risk" && <TenantRiskPanel tenantId={user.id} />}
                 {role === "tenant" && activeTab === "trust-connections" && <TrustNetworkPanel userId={user.id} />}
+                {role === "tenant" && activeTab === "tenancies" && <TenantTenancyView userId={user.id} />}
+                {role === "tenant" && activeTab === "worker-complaint" && <FileWorkerComplaint userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
                   <div className="text-center py-8">
