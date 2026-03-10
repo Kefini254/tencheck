@@ -117,6 +117,8 @@ const ServiceWorkerDashboard = () => {
 
   const tabs: { id: Tab; icon: any; label: string }[] = [
     { id: "overview", icon: User, label: "Profile Overview" },
+    { id: "messages", icon: MessageSquare, label: "Messages" },
+    { id: "notifications", icon: Bell, label: "Notifications" },
     { id: "incoming", icon: Briefcase, label: "Incoming Jobs" },
     { id: "active", icon: Clock, label: "Active Jobs" },
     { id: "history", icon: History, label: "Job History" },
