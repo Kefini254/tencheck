@@ -212,6 +212,11 @@ const Dashboard = () => {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* Shared tabs */}
+                {activeTab === "messages" && <MessagingHub userId={user.id} userRole={role} />}
+                {activeTab === "notifications" && <NotificationsPanel userId={user.id} />}
+
+                {/* Landlord tabs */}
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
                 {role === "landlord" && activeTab === "ai-tenant-rank" && <LandlordAIRankView userId={user.id} />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
@@ -223,6 +228,9 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "demand-insights" && <PropertyDemandPanel />}
                 {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
+                {role === "landlord" && activeTab === "tenancy-records" && <LandlordTenancyManager userId={user.id} />}
+
+                {/* Tenant tabs */}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
                 {role === "tenant" && activeTab === "ai-recommendations" && <AIMatchPanel userId={user.id} mode="tenant" />}
                 {role === "tenant" && activeTab === "share-passport" && <SharePassport userId={user.id} />}
@@ -235,12 +243,15 @@ const Dashboard = () => {
                   </div>
                 )}
                 {role === "tenant" && activeTab === "financial-requests" && <FinancialRequestPanel userId={user.id} />}
+                {role === "tenant" && activeTab === "service-credits" && <ServiceCreditsPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
                 {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-risk" && <TenantRiskPanel tenantId={user.id} />}
                 {role === "tenant" && activeTab === "trust-connections" && <TrustNetworkPanel userId={user.id} />}
+                {role === "tenant" && activeTab === "tenancies" && <TenantTenancyView userId={user.id} />}
+                {role === "tenant" && activeTab === "worker-complaint" && <FileWorkerComplaint userId={user.id} />}
                 {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
                   <div className="text-center py-8">
