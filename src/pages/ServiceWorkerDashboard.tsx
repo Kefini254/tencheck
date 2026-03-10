@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Shield, LogOut, Menu, X, ChevronRight, Wrench, Briefcase,
   Clock, History, Settings, Star, MapPin, Phone, Upload,
-  CheckCircle, XCircle, User, Eye, EyeOff, Wifi
+  CheckCircle, XCircle, User, Eye, EyeOff, Wifi,
+  MessageSquare, Bell, AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import tenCheckLogo from "@/assets/tencheck-logo.png";
+import { MessagingHub } from "@/components/dashboard/MessagingHub";
+import { NotificationsPanel, NotificationBell } from "@/components/dashboard/NotificationsPanel";
 
 const SERVICE_CATEGORIES = [
   "Plumbing", "Electrical Repair", "House Cleaning", "Furniture Moving",
