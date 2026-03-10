@@ -191,15 +191,16 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
-        <header className="h-16 border-b border-border bg-card flex items-center px-4 sm:px-6 gap-4 shrink-0">
-          <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </button>
-          <div>
+        <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 sm:px-6 shrink-0">
+          <div className="flex items-center gap-4">
+            <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </button>
             <h1 className="font-display font-bold text-lg text-foreground">
               {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
             </h1>
           </div>
+          <NotificationBell userId={user.id} onClick={() => setActiveTab("notifications")} />
         </header>
 
         <div className="flex-1 overflow-y-auto">
