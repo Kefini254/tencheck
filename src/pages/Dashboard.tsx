@@ -10,7 +10,7 @@ import {
   LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
   ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
   UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
-  TrendingDown, Users, Scale, Sparkles, Share2
+  TrendingDown, Users, Scale, Sparkles, Share2, Bell, Coins, Flag, ClipboardList
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +29,11 @@ import { TrustNetworkPanel } from "@/components/dashboard/TrustNetworkPanel";
 import { DisputeOverviewPanel } from "@/components/dashboard/DisputeOverviewPanel";
 import SharePassport from "@/components/dashboard/SharePassport";
 import AIMatchPanel from "@/components/dashboard/AIMatchPanel";
+import { MessagingHub } from "@/components/dashboard/MessagingHub";
+import { NotificationsPanel, NotificationBell } from "@/components/dashboard/NotificationsPanel";
+import { LandlordTenancyManager, TenantTenancyView } from "@/components/dashboard/TenancyManager";
+import { ServiceCreditsPanel } from "@/components/dashboard/ServiceCreditsPanel";
+import { FileWorkerComplaint } from "@/components/dashboard/WorkerComplaintsPanel";
 
 type Tab = string;
 
