@@ -26,7 +26,7 @@ const SERVICE_CATEGORIES = [
   "WiFi Installation", "General Handyman", "Landscaping", "Relocation Assistance",
 ];
 
-type Tab = "overview" | "incoming" | "active" | "history" | "settings";
+type Tab = "overview" | "incoming" | "active" | "history" | "messages" | "notifications" | "settings";
 
 const ServiceWorkerDashboard = () => {
   const { user, profile, loading, signOut } = useAuth();
