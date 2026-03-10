@@ -74,8 +74,8 @@ const AdminWorkerPanel = () => {
             <div key={worker.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <p className="font-semibold text-foreground">{worker.service_category}</p>
-                  <p className="text-xs text-muted-foreground">City: {worker.city || "Not set"} • Experience: {worker.years_experience || 0} yrs • Jobs: {worker.jobs_completed || 0}</p>
+                   <p className="font-semibold text-foreground">{worker.profile?.name || worker.service_category}</p>
+                   <p className="text-xs text-muted-foreground">Category: {worker.service_category} • City: {worker.city || "Not set"} • Experience: {worker.years_experience || 0} yrs • Jobs: {worker.jobs_completed || 0}</p>
                   <div className="flex gap-2 flex-wrap">
                     <Badge className={worker.verification_status === "verified" ? "bg-primary/10 text-primary" : worker.verification_status === "suspended" ? "bg-destructive/10 text-destructive" : "bg-yellow-500/10 text-yellow-600"}>
                       {worker.verification_status}
