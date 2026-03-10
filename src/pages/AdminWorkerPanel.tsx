@@ -16,11 +16,17 @@ const AdminWorkerPanel = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("service_worker_profiles")
-        .select("*, profiles!service_worker_profiles_user_id_fkey(name, email, phone)")
+        .select("*")
         .order("created_at", { ascending: false });
-      // fallback: if join fails, just get profiles separately
       if (!data) return [];
-      return data;
+      // Fetch profile names for each worker
+      const userIds = data.map((w: any) => w.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, name, email, phone")
+        .in("user_id", userIds);
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      return data.map((w: any) => ({ ...w, profile: profileMap.get(w.user_id) || null }));
     },
   });
 
