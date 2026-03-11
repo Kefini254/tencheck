@@ -50,11 +50,29 @@ const Dashboard = () => {
     if (!loading && user && role === "service_worker") navigate("/worker-dashboard");
   }, [loading, user, navigate, role]);
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (role === "landlord") setActiveTab("my-properties");
     else if (role === "tenant") setActiveTab("browse-houses");
     else setActiveTab("search-tenant");
   }, [role]);
+
+  // Realtime: listen for service_request changes and notifications
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("dashboard-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "service_requests" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["service-requests"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["notif-count"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, queryClient]);
 
   if (loading) {
     return (

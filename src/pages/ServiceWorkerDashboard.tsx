@@ -54,6 +54,23 @@ const ServiceWorkerDashboard = () => {
     enabled: !!user,
   });
 
+  // Realtime subscription for service_requests changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("service-requests-realtime")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "service_requests",
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["incoming-jobs"] });
+        queryClient.invalidateQueries({ queryKey: ["active-jobs"] });
+        queryClient.invalidateQueries({ queryKey: ["job-history"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   // Auto-create profile if missing
   const createProfile = useMutation({
     mutationFn: async (category: string) => {
@@ -184,6 +201,9 @@ const ServiceWorkerDashboard = () => {
           <h1 className="font-display font-bold text-lg text-foreground">
             {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
           </h1>
+          <div className="ml-auto">
+            <NotificationBell userId={user.id} onClick={() => setActiveTab("notifications")} />
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto">
@@ -196,7 +216,7 @@ const ServiceWorkerDashboard = () => {
                 {activeTab === "incoming" && <IncomingJobs userId={user.id} workerProfile={workerProfile} />}
                 {activeTab === "active" && <ActiveJobs userId={user.id} />}
                 {activeTab === "history" && <JobHistory userId={user.id} />}
-                {activeTab === "settings" && <ProfileSettings userId={user.id} workerProfile={workerProfile} />}
+                {activeTab === "settings" && <ProfileSettings userId={user.id} workerProfile={workerProfile} onSaved={() => setActiveTab("overview")} />}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -261,7 +281,7 @@ const ProfileOverview = ({ profile }: { profile: any }) => {
       {profile.verification_status === "pending" && (
         <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
           <p className="text-sm font-medium text-yellow-700">⚠️ Your profile is pending verification</p>
-          <p className="text-xs text-muted-foreground mt-1">Upload your identity document and verify your phone to get verified. Go to Profile Settings to complete your verification.</p>
+          <p className="text-xs text-muted-foreground mt-1">Complete your Profile Settings to get automatically verified.</p>
         </div>
       )}
     </div>
@@ -285,7 +305,6 @@ const IncomingJobs = ({ userId, workerProfile }: { userId: string; workerProfile
   const { data: jobs, isLoading } = useQuery({
     queryKey: ["incoming-jobs", userId],
     queryFn: async () => {
-      // Show open requests matching worker's category that aren't assigned yet
       const { data } = await supabase
         .from("service_requests")
         .select("*")
@@ -306,7 +325,7 @@ const IncomingJobs = ({ userId, workerProfile }: { userId: string; workerProfile
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Job accepted!");
+      toast.success("Job accepted! The requester has been notified.");
       queryClient.invalidateQueries({ queryKey: ["incoming-jobs"] });
       queryClient.invalidateQueries({ queryKey: ["active-jobs"] });
     },
@@ -323,7 +342,13 @@ const IncomingJobs = ({ userId, workerProfile }: { userId: string; workerProfile
       ) : (
         <div className="space-y-3">
           {jobs?.map((job: any) => (
-            <div key={job.id} className="rounded-xl border border-border bg-card p-4">
+            <motion.div
+              key={job.id}
+              layout
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, x: -100 }}
+              className="rounded-xl border border-border bg-card p-4"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <p className="font-semibold text-foreground">{job.service_category}</p>
@@ -337,7 +362,7 @@ const IncomingJobs = ({ userId, workerProfile }: { userId: string; workerProfile
                   </Button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
@@ -366,7 +391,6 @@ const ActiveJobs = ({ userId }: { userId: string }) => {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const updates: any = { status };
       if (status === "completed") {
-        // Increment jobs_completed on worker profile
         const { data: wp } = await supabase
           .from("service_worker_profiles")
           .select("jobs_completed")
@@ -504,7 +528,7 @@ const JobHistory = ({ userId }: { userId: string }) => {
 };
 
 // ===== Profile Settings =====
-const ProfileSettings = ({ userId, workerProfile }: { userId: string; workerProfile: any }) => {
+const ProfileSettings = ({ userId, workerProfile, onSaved }: { userId: string; workerProfile: any; onSaved: () => void }) => {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState(workerProfile.service_category);
   const [description, setDescription] = useState(workerProfile.description || "");
@@ -515,21 +539,42 @@ const ProfileSettings = ({ userId, workerProfile }: { userId: string; workerProf
 
   const updateProfile = useMutation({
     mutationFn: async () => {
+      // Determine if we should auto-verify: profile has description, city, experience, and document
+      const hasDocument = !!workerProfile.identity_document_url;
+      const hasCity = !!city.trim();
+      const hasDescription = !!description.trim();
+      const shouldVerify = hasDocument && hasCity && hasDescription;
+
+      const updateData: any = {
+        service_category: category,
+        description: description || null,
+        city,
+        years_experience: parseInt(experience) || 0,
+        availability_status: availability,
+      };
+
+      // Auto-verify if all requirements met and currently pending
+      if (shouldVerify && workerProfile.verification_status === "pending") {
+        updateData.verification_status = "verified";
+      }
+
       const { error } = await supabase
         .from("service_worker_profiles")
-        .update({
-          service_category: category,
-          description: description || null,
-          city,
-          years_experience: parseInt(experience) || 0,
-          availability_status: availability,
-        })
+        .update(updateData)
         .eq("user_id", userId);
       if (error) throw error;
+
+      return shouldVerify && workerProfile.verification_status === "pending";
     },
-    onSuccess: () => {
-      toast.success("Profile updated!");
+    onSuccess: (wasVerified) => {
       queryClient.invalidateQueries({ queryKey: ["worker-profile"] });
+      if (wasVerified) {
+        toast.success("Profile saved & verified! Your profile is now visible in the marketplace.");
+      } else {
+        toast.success("Profile updated successfully!");
+      }
+      // Navigate back to overview after saving
+      onSaved();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -557,7 +602,7 @@ const ProfileSettings = ({ userId, workerProfile }: { userId: string; workerProf
       .update({ identity_document_url: urlData.publicUrl })
       .eq("user_id", userId);
 
-    toast.success("Document uploaded! Awaiting admin verification.");
+    toast.success("Document uploaded!");
     queryClient.invalidateQueries({ queryKey: ["worker-profile"] });
     setUploading(false);
   };
@@ -616,12 +661,12 @@ const ProfileSettings = ({ userId, workerProfile }: { userId: string; workerProf
       {/* Identity Document Upload */}
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
         <h3 className="font-display font-bold text-foreground">Identity Verification</h3>
-        <p className="text-sm text-muted-foreground">Upload a government-issued ID to get verified.</p>
+        <p className="text-sm text-muted-foreground">Upload a government-issued ID. Once uploaded and profile is complete, you'll be automatically verified.</p>
 
         {workerProfile.identity_document_url ? (
           <div className="flex items-center gap-2 text-sm text-primary">
             <CheckCircle className="h-4 w-4" />
-            <span>Document uploaded — awaiting review</span>
+            <span>Document uploaded</span>
           </div>
         ) : (
           <div>
