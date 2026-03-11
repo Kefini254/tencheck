@@ -1389,6 +1389,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_thread_participant: {
+        Args: { _thread_id: string; _user_id: string }
+        Returns: boolean
+      }
       refresh_property_demand: { Args: never; Returns: undefined }
     }
     Enums: {
