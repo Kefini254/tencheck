@@ -16,6 +16,7 @@ import ServiceWorkerDashboard from "./pages/ServiceWorkerDashboard";
 import Services from "./pages/Services";
 import TenantProfilePage from "./pages/TenantProfilePage";
 import PassportPublic from "./pages/PassportPublic";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
