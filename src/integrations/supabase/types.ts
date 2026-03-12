@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string
+          id: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          related_user_id: string | null
+          status: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description?: string
+          id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          related_user_id?: string | null
+          status?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          related_user_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
           created_at: string
@@ -286,6 +319,36 @@ export type Database = {
           },
         ]
       }
+      moderation_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          reason: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          reason?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -381,6 +444,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_suspended: boolean
           name: string
           phone: string | null
           role: string
@@ -392,6 +456,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_suspended?: boolean
           name?: string
           phone?: string | null
           role?: string
@@ -403,6 +468,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_suspended?: boolean
           name?: string
           phone?: string | null
           role?: string
