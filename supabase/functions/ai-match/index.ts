@@ -136,6 +136,13 @@ Based on the tenant's credit profile, rank the top 5 best-fit properties. Consid
         });
       }
 
+      // Verify the requester owns this property
+      if (property.landlord_id !== user.id) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Get tenants who inquired about this property
       const { data: inquiries } = await serviceClient.from("inquiries").select("tenant_id").eq("property_id", property_id);
       const tenantIds = [...new Set((inquiries || []).map(i => i.tenant_id))];
