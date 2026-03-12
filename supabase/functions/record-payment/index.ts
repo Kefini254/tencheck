@@ -39,12 +39,28 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === "record") {
-      const { tenant_id, property_id, landlord_id, amount, payment_method, mpesa_transaction_code } = body;
+      const { tenant_id, property_id, amount, payment_method, mpesa_transaction_code } = body;
+      const landlord_id = userId; // Always from JWT
+
+      // Verify landlord has a tenancy relationship with this tenant
+      const { data: tenancyRel } = await supabase.from("tenancy_records")
+        .select("id")
+        .eq("tenant_id", tenant_id)
+        .eq("landlord_id", landlord_id)
+        .limit(1)
+        .maybeSingle();
+
+      if (!tenancyRel) {
+        return new Response(JSON.stringify({ error: "No tenancy relationship with this tenant" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const { data, error } = await supabase.from("rent_transactions").insert({
         tenant_id,
         property_id: property_id || null,
-        landlord_id: landlord_id || userId,
+        landlord_id,
         amount,
         payment_method: payment_method || "mpesa",
         mpesa_transaction_code: mpesa_transaction_code || null,
