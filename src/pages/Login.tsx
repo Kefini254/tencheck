@@ -23,16 +23,24 @@ const Login = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Welcome back!");
-      // Check profile role to redirect appropriately
-      const { data: prof } = await (await import("@/integrations/supabase/client")).supabase
-        .from("profiles")
-        .select("role")
-        .eq("user_id", (await (await import("@/integrations/supabase/client")).supabase.auth.getUser()).data.user?.id || "")
-        .maybeSingle();
-      if (prof?.role === "service_worker") {
+      const { supabase: sb } = await import("@/integrations/supabase/client");
+      const uid = (await sb.auth.getUser()).data.user?.id || "";
+      const { data: prof } = await sb.from("profiles").select("*").eq("user_id", uid).maybeSingle();
+      if ((prof as any)?.is_suspended) {
+        toast.error("Your account has been suspended. Contact support.");
+        await sb.auth.signOut();
+        setLoading(false);
+        return;
+      }
+      const { data: adminRole } = await sb.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin" as any).maybeSingle();
+      if (adminRole) {
+        toast.success("Welcome, Admin!");
+        navigate("/admin");
+      } else if (prof?.role === "service_worker") {
+        toast.success("Welcome back!");
         navigate("/worker-dashboard");
       } else {
+        toast.success("Welcome back!");
         navigate("/dashboard");
       }
     }
