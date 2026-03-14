@@ -207,6 +207,39 @@ export type Database = {
         }
         Relationships: []
       }
+      landlord_verification: {
+        Row: {
+          created_at: string
+          document_type: string
+          document_url: string
+          id: string
+          landlord_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string
+          document_url: string
+          id?: string
+          landlord_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          document_url?: string
+          id?: string
+          landlord_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          verification_status?: string
+        }
+        Relationships: []
+      }
       landlords: {
         Row: {
           created_at: string
@@ -442,6 +475,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          deletion_requested_at: string | null
+          deletion_status: string
           email: string | null
           id: string
           is_suspended: boolean
@@ -454,6 +489,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          deletion_requested_at?: string | null
+          deletion_status?: string
           email?: string | null
           id?: string
           is_suspended?: boolean
@@ -466,6 +503,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          deletion_requested_at?: string | null
+          deletion_status?: string
           email?: string | null
           id?: string
           is_suspended?: boolean
