@@ -7,6 +7,13 @@ import { Shield, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { PasswordStrengthIndicator, isPasswordStrong } from "@/components/PasswordStrengthIndicator";
+
+const roles = [
+  { value: "tenant" as const, label: "Tenant" },
+  { value: "landlord" as const, label: "Landlord" },
+  { value: "service_worker" as const, label: "Service Worker" },
+];
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -21,6 +28,10 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordStrong(password)) {
+      toast.error("Password does not meet strength requirements");
+      return;
+    }
     setLoading(true);
     const { error } = await signUp(email, password, { name, phone, role });
     setLoading(false);
@@ -31,6 +42,8 @@ const Signup = () => {
       navigate("/login");
     }
   };
+
+  const roleLabel = roles.find(r => r.value === role)?.label?.toUpperCase();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4 py-12">
@@ -50,17 +63,26 @@ const Signup = () => {
             <p className="text-muted-foreground text-sm mt-1">Start building rental trust today</p>
           </div>
 
-          <div className="flex rounded-xl bg-muted p-1 mb-6">
-            {(["tenant", "landlord", "service_worker"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${role === r ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}
-              >
-                {r === "tenant" ? "Tenant" : r === "landlord" ? "Landlord" : "Service Worker"}
-              </button>
-            ))}
+          {/* Role Selection */}
+          <div className="space-y-2 mb-6">
+            <Label className="text-sm font-medium">Register as:</Label>
+            <div className="flex rounded-xl bg-muted p-1">
+              {roles.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => setRole(r.value)}
+                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                    role === r.value ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-sm font-semibold text-primary text-center mt-2">
+              You are registering as a {roleLabel}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +96,7 @@ const Signup = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="0712 345 678" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+              <Input id="phone" type="tel" placeholder="0712 345 678" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
             {role === "tenant" && (
               <div className="space-y-2">
@@ -84,9 +106,10 @@ const Signup = () => {
             )}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <PasswordStrengthIndicator password={password} />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !isPasswordStrong(password)}>
               {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>

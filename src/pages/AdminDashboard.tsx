@@ -16,15 +16,16 @@ import {
 } from "@/components/ui/table";
 import {
   Shield, BarChart3, Users, Wrench, Bell, FileText, Eye, EyeOff,
-  Ban, Trash2, AlertTriangle, CheckCircle, Search, Activity,
+  Ban, Trash2, AlertTriangle, CheckCircle, Search, Activity, FileCheck,
 } from "lucide-react";
 
-type Tab = "overview" | "workers" | "users" | "content" | "alerts" | "log";
+type Tab = "overview" | "workers" | "users" | "content" | "alerts" | "log" | "verification";
 
 const tabItems: { id: Tab; icon: any; label: string }[] = [
   { id: "overview", icon: BarChart3, label: "Overview" },
   { id: "workers", icon: Wrench, label: "Workers" },
   { id: "users", icon: Users, label: "Users" },
+  { id: "verification", icon: FileCheck, label: "Verification" },
   { id: "content", icon: FileText, label: "Content" },
   { id: "alerts", icon: Bell, label: "Alerts" },
   { id: "log", icon: Activity, label: "Activity Log" },
@@ -63,7 +64,6 @@ const AdminDashboard = () => {
     enabled: !!user,
   });
 
-  // Realtime alerts
   useEffect(() => {
     if (!isAdmin) return;
     const channel = supabase
@@ -77,7 +77,6 @@ const AdminDashboard = () => {
   }, [isAdmin, qc]);
 
   // ── QUERIES ──
-
   const { data: metrics } = useQuery({
     queryKey: ["admin-metrics"],
     queryFn: async () => {
@@ -163,10 +162,22 @@ const AdminDashboard = () => {
     enabled: isAdmin === true && tab === "log",
   });
 
+  const { data: verificationQueue } = useQuery({
+    queryKey: ["admin-verification-queue"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("landlord_verification").select("*").order("created_at", { ascending: false });
+      if (!data?.length) return [];
+      const landlordIds = data.map((v: any) => v.landlord_id);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, name, email").in("user_id", landlordIds);
+      const pm = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      return data.map((v: any) => ({ ...v, profile: pm.get(v.landlord_id) }));
+    },
+    enabled: isAdmin === true && tab === "verification",
+  });
+
   const unreadAlerts = alerts?.filter((a: any) => a.status === "unread").length ?? 0;
 
   // ── MUTATIONS ──
-
   const logAction = async (action: string, targetId: string, targetType: string, reason: string) => {
     await (supabase as any).from("moderation_log").insert({
       admin_id: user!.id, action, target_id: targetId, target_type: targetType, reason,
@@ -179,7 +190,6 @@ const AdminDashboard = () => {
       await logAction("suspend_worker", workerId, "service_worker_profile", "Admin suspended worker");
     },
     onSuccess: () => { toast.success("Worker suspended"); qc.invalidateQueries({ queryKey: ["admin-all-workers"] }); },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const reduceVisibilityMut = useMutation({
@@ -188,7 +198,6 @@ const AdminDashboard = () => {
       await logAction("reduce_visibility", workerId, "service_worker_profile", "Admin reduced visibility");
     },
     onSuccess: () => { toast.success("Visibility reduced"); qc.invalidateQueries({ queryKey: ["admin-all-workers"] }); },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const suspendUserMut = useMutation({
@@ -197,7 +206,6 @@ const AdminDashboard = () => {
       await logAction("suspend_user", userId, "profile", "Admin suspended user");
     },
     onSuccess: () => { toast.success("User suspended"); qc.invalidateQueries({ queryKey: ["admin-all-users"] }); },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const unsuspendUserMut = useMutation({
@@ -206,7 +214,14 @@ const AdminDashboard = () => {
       await logAction("unsuspend_user", userId, "profile", "Admin unsuspended user");
     },
     onSuccess: () => { toast.success("User unsuspended"); qc.invalidateQueries({ queryKey: ["admin-all-users"] }); },
-    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteUserMut = useMutation({
+    mutationFn: async (userId: string) => {
+      await supabase.from("profiles").update({ deletion_status: "deleted", is_suspended: true } as any).eq("user_id", userId);
+      await logAction("delete_user", userId, "profile", "Admin permanently deleted user");
+    },
+    onSuccess: () => { toast.success("User marked as deleted"); qc.invalidateQueries({ queryKey: ["admin-all-users"] }); },
   });
 
   const removePropertyMut = useMutation({
@@ -215,7 +230,6 @@ const AdminDashboard = () => {
       await logAction("remove_property", propId, "property", "Admin removed property listing");
     },
     onSuccess: () => { toast.success("Property removed"); qc.invalidateQueries({ queryKey: ["admin-all-properties"] }); },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const markAlertReadMut = useMutation({
@@ -232,11 +246,25 @@ const AdminDashboard = () => {
     onSuccess: () => { toast.success("All alerts marked as read"); qc.invalidateQueries({ queryKey: ["admin-alerts"] }); },
   });
 
-  // ── GUARDS ──
+  const verifyLandlordMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await (supabase as any).from("landlord_verification").update({
+        verification_status: status,
+        reviewed_by: user!.id,
+        reviewed_at: new Date().toISOString(),
+      }).eq("id", id);
+      await logAction(`landlord_verification_${status}`, id, "landlord_verification", `Admin ${status} landlord verification`);
+    },
+    onSuccess: () => { toast.success("Verification updated"); qc.invalidateQueries({ queryKey: ["admin-verification-queue"] }); },
+  });
 
+  // ── GUARDS ──
   if (loading || roleLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
@@ -295,6 +323,11 @@ const AdminDashboard = () => {
                 {t.label}
                 {t.id === "alerts" && unreadAlerts > 0 && (
                   <Badge variant="destructive" className="text-[10px] px-1.5 py-0">{unreadAlerts}</Badge>
+                )}
+                {t.id === "verification" && verificationQueue?.filter((v: any) => v.verification_status === "pending").length > 0 && (
+                  <Badge className="bg-yellow-500/20 text-yellow-600 text-[10px] px-1.5 py-0">
+                    {verificationQueue.filter((v: any) => v.verification_status === "pending").length}
+                  </Badge>
                 )}
               </button>
             );
@@ -429,6 +462,7 @@ const AdminDashboard = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Deletion</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -438,37 +472,112 @@ const AdminDashboard = () => {
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.name || "—"}</TableCell>
                       <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell><Badge variant="secondary">{u.role}</Badge></TableCell>
+                      <TableCell><Badge variant="secondary" className="capitalize">{u.role}</Badge></TableCell>
                       <TableCell>
-                        {(u as any).is_suspended
+                        {u.is_suspended
                           ? <Badge variant="destructive">Suspended</Badge>
                           : <Badge className="bg-primary/10 text-primary">Active</Badge>}
                       </TableCell>
+                      <TableCell>
+                        {u.deletion_status === "pending_deletion" ? (
+                          <Badge className="bg-yellow-500/10 text-yellow-600">Pending Delete</Badge>
+                        ) : u.deletion_status === "deleted" ? (
+                          <Badge variant="destructive">Deleted</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        {(u as any).is_suspended ? (
-                          <ConfirmAction
-                            trigger={<Button size="sm" variant="outline"><CheckCircle className="h-3 w-3 mr-1" />Unsuspend</Button>}
-                            title="Unsuspend User"
-                            description={`Restore access for ${u.name || u.email}?`}
-                            onConfirm={() => unsuspendUserMut.mutate(u.user_id)}
-                          />
-                        ) : (
-                          <ConfirmAction
-                            trigger={<Button size="sm" variant="destructive"><Ban className="h-3 w-3 mr-1" />Suspend</Button>}
-                            title="Suspend User"
-                            description={`Suspend ${u.name || u.email}? They will lose platform access.`}
-                            onConfirm={() => suspendUserMut.mutate(u.user_id)}
-                          />
-                        )}
+                        <div className="flex gap-1 flex-wrap">
+                          {u.is_suspended ? (
+                            <ConfirmAction
+                              trigger={<Button size="sm" variant="outline"><CheckCircle className="h-3 w-3 mr-1" />Unsuspend</Button>}
+                              title="Unsuspend User"
+                              description={`Restore access for ${u.name || u.email}?`}
+                              onConfirm={() => unsuspendUserMut.mutate(u.user_id)}
+                            />
+                          ) : (
+                            <ConfirmAction
+                              trigger={<Button size="sm" variant="outline"><Ban className="h-3 w-3 mr-1" />Suspend</Button>}
+                              title="Suspend User"
+                              description={`Suspend ${u.name || u.email}? They will lose platform access.`}
+                              onConfirm={() => suspendUserMut.mutate(u.user_id)}
+                            />
+                          )}
+                          {u.deletion_status !== "deleted" && (
+                            <ConfirmAction
+                              trigger={<Button size="sm" variant="destructive"><Trash2 className="h-3 w-3 mr-1" />Delete</Button>}
+                              title="Permanently Delete User"
+                              description={`Permanently delete ${u.name || u.email}? This action will be logged and cannot be undone.`}
+                              onConfirm={() => deleteUserMut.mutate(u.user_id)}
+                            />
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                   {filteredUsers.length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
+            </div>
+          </div>
+        )}
+
+        {/* ── LANDLORD VERIFICATION ── */}
+        {tab === "verification" && (
+          <div className="space-y-4">
+            <h2 className="font-display text-lg font-bold flex items-center gap-2">
+              <FileCheck className="h-5 w-5 text-primary" /> Landlord Verification Queue
+            </h2>
+            <div className="space-y-3">
+              {verificationQueue?.map((v: any) => (
+                <div key={v.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm">{v.profile?.name || "Unknown Landlord"}</p>
+                    <p className="text-xs text-muted-foreground">{v.profile?.email}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Badge variant="outline" className="text-xs capitalize">{v.document_type.replace(/_/g, " ")}</Badge>
+                      <Badge className={
+                        v.verification_status === "verified" ? "bg-primary/10 text-primary" :
+                        v.verification_status === "rejected" ? "bg-destructive/10 text-destructive" :
+                        "bg-yellow-500/10 text-yellow-600"
+                      }>{v.verification_status}</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(v.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {v.document_url && (
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={v.document_url} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-3 w-3 mr-1" /> View
+                        </a>
+                      </Button>
+                    )}
+                    {v.verification_status === "pending" && (
+                      <>
+                        <ConfirmAction
+                          trigger={<Button size="sm" className="bg-primary text-primary-foreground"><CheckCircle className="h-3 w-3 mr-1" />Verify</Button>}
+                          title="Verify Landlord"
+                          description={`Verify ${v.profile?.name || "this landlord"}? They will receive a Verified badge.`}
+                          onConfirm={() => verifyLandlordMut.mutate({ id: v.id, status: "verified" })}
+                        />
+                        <ConfirmAction
+                          trigger={<Button size="sm" variant="destructive"><Ban className="h-3 w-3 mr-1" />Reject</Button>}
+                          title="Reject Verification"
+                          description={`Reject verification for ${v.profile?.name || "this landlord"}?`}
+                          onConfirm={() => verifyLandlordMut.mutate({ id: v.id, status: "rejected" })}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {!verificationQueue?.length && (
+                <p className="text-sm text-muted-foreground text-center py-8">No verification requests.</p>
+              )}
             </div>
           </div>
         )}
@@ -479,7 +588,6 @@ const AdminDashboard = () => {
             <h2 className="font-display text-lg font-bold flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" /> Content Moderation
             </h2>
-
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                 Property Listings ({allProperties?.length ?? 0})
@@ -502,7 +610,6 @@ const AdminDashboard = () => {
                 {!allProperties?.length && <p className="text-sm text-muted-foreground">No properties listed.</p>}
               </div>
             </div>
-
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                 Worker Complaints ({allComplaints?.length ?? 0})
