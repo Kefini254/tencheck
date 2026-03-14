@@ -19,30 +19,47 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     const { error } = await signIn(email, password);
-    setLoading(false);
     if (error) {
       toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch profile and check suspension/role
+    const { supabase: sb } = await import("@/integrations/supabase/client");
+    const uid = (await sb.auth.getUser()).data.user?.id || "";
+    const { data: prof } = await sb.from("profiles").select("*").eq("user_id", uid).maybeSingle();
+    
+    if ((prof as any)?.is_suspended) {
+      toast.error("Your account has been suspended. Contact support.");
+      await sb.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    if ((prof as any)?.deletion_status === "pending_deletion") {
+      // Restore account on login during grace period
+      await sb.from("profiles").update({ deletion_status: "active", deletion_requested_at: null } as any).eq("user_id", uid);
+      toast.info("Welcome back! Your account deletion has been cancelled.");
+    }
+
+    // Check admin role
+    const { data: adminRole } = await sb.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin" as any).maybeSingle();
+    
+    setLoading(false);
+    
+    if (adminRole) {
+      toast.success("Welcome, Admin!");
+      navigate("/admin");
+    } else if (prof?.role === "service_worker") {
+      toast.success("Welcome back!");
+      navigate("/worker-dashboard");
+    } else if (prof?.role === "landlord") {
+      toast.success("Welcome back!");
+      navigate("/dashboard");
     } else {
-      const { supabase: sb } = await import("@/integrations/supabase/client");
-      const uid = (await sb.auth.getUser()).data.user?.id || "";
-      const { data: prof } = await sb.from("profiles").select("*").eq("user_id", uid).maybeSingle();
-      if ((prof as any)?.is_suspended) {
-        toast.error("Your account has been suspended. Contact support.");
-        await sb.auth.signOut();
-        setLoading(false);
-        return;
-      }
-      const { data: adminRole } = await sb.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin" as any).maybeSingle();
-      if (adminRole) {
-        toast.success("Welcome, Admin!");
-        navigate("/admin");
-      } else if (prof?.role === "service_worker") {
-        toast.success("Welcome back!");
-        navigate("/worker-dashboard");
-      } else {
-        toast.success("Welcome back!");
-        navigate("/dashboard");
-      }
+      toast.success("Welcome back!");
+      navigate("/dashboard");
     }
   };
 
