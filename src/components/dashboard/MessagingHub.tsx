@@ -314,7 +314,22 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
         attachMap.get(a.message_id)!.push(a);
       });
 
-      return data.map(m => ({ ...m, sender: profileMap.get(m.sender_id), attachments: attachMap.get(m.id) || [] }));
+      // Generate signed URLs for attachments
+      const enrichedData = await Promise.all(data.map(async (m) => {
+        const atts = attachMap.get(m.id) || [];
+        const signedAtts = await Promise.all(atts.map(async (att: any) => {
+          // If file_path is a raw path (not a full URL), create a signed URL
+          if (att.file_path && !att.file_path.startsWith("http")) {
+            const { data: signedData } = await supabase.storage
+              .from("message-attachments")
+              .createSignedUrl(att.file_path, 3600);
+            return { ...att, signedUrl: signedData?.signedUrl || att.file_path };
+          }
+          return { ...att, signedUrl: att.file_path };
+        }));
+        return { ...m, sender: profileMap.get(m.sender_id), attachments: signedAtts };
+      }));
+      return enrichedData;
     },
     refetchInterval: 5000,
   });
@@ -364,9 +379,7 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
     const { error: uploadErr } = await supabase.storage.from("message-attachments").upload(filePath, file);
     if (uploadErr) { toast.error("Upload failed"); setUploading(false); return; }
 
-    const { data: urlData } = supabase.storage.from("message-attachments").getPublicUrl(filePath);
-
-    // Create message with attachment
+    // Create message with attachment (store raw path, use signed URLs for display)
     const { data: msg, error: msgErr } = await supabase.from("messages").insert({
       thread_id: threadId,
       sender_id: userId,
@@ -377,7 +390,7 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
     if (!msgErr && msg) {
       await supabase.from("message_attachments").insert({
         message_id: msg.id,
-        file_path: urlData.publicUrl,
+        file_path: filePath,
         file_type: file.type.startsWith("image") ? "image" : "pdf",
         uploaded_by: userId,
       });
@@ -418,9 +431,9 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
                   {msg.attachments?.map((att: any) => (
                     <div key={att.id} className="mt-2">
                       {att.file_type === "image" ? (
-                        <img src={att.file_path} alt="attachment" className="rounded-lg max-w-full max-h-48 object-cover" />
+                        <img src={att.signedUrl || att.file_path} alt="attachment" className="rounded-lg max-w-full max-h-48 object-cover" />
                       ) : (
-                        <a href={att.file_path} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-xs underline">
+                        <a href={att.signedUrl || att.file_path} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-xs underline">
                           <FileText className="h-3 w-3" /> View file
                         </a>
                       )}

@@ -43,12 +43,12 @@ const Login = () => {
       toast.info("Welcome back! Your account deletion has been cancelled.");
     }
 
-    // Check admin role
-    const { data: adminRole } = await sb.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin" as any).maybeSingle();
+    // Check admin role via secure server-side function
+    const { data: isAdminRole } = await sb.rpc("has_role", { _user_id: uid, _role: "admin" });
     
     setLoading(false);
     
-    if (adminRole) {
+    if (isAdminRole) {
       toast.success("Welcome, Admin!");
       navigate("/admin");
     } else if (prof?.role === "service_worker") {
