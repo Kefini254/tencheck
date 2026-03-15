@@ -125,7 +125,20 @@ Deno.serve(async (req) => {
     if (action === "wallet-pay") {
       const { property_id, landlord_id, amount } = body;
 
-      const { data: wallet } = await supabase
+      if (!amount || typeof amount !== "number" || amount <= 0) {
+        return new Response(JSON.stringify({ error: "Invalid payment amount" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Use service role for wallet operations
+      const serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      const { data: wallet } = await serviceClient
         .from("tenant_wallets")
         .select("*")
         .eq("tenant_id", userId)
@@ -138,8 +151,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Deduct from wallet
-      await supabase
+      // Deduct from wallet using service role
+      await serviceClient
         .from("tenant_wallets")
         .update({ balance: wallet.balance - amount })
         .eq("tenant_id", userId);
