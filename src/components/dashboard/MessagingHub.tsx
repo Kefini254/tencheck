@@ -314,7 +314,22 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
         attachMap.get(a.message_id)!.push(a);
       });
 
-      return data.map(m => ({ ...m, sender: profileMap.get(m.sender_id), attachments: attachMap.get(m.id) || [] }));
+      // Generate signed URLs for attachments
+      const enrichedData = await Promise.all(data.map(async (m) => {
+        const atts = attachMap.get(m.id) || [];
+        const signedAtts = await Promise.all(atts.map(async (att: any) => {
+          // If file_path is a raw path (not a full URL), create a signed URL
+          if (att.file_path && !att.file_path.startsWith("http")) {
+            const { data: signedData } = await supabase.storage
+              .from("message-attachments")
+              .createSignedUrl(att.file_path, 3600);
+            return { ...att, signedUrl: signedData?.signedUrl || att.file_path };
+          }
+          return { ...att, signedUrl: att.file_path };
+        }));
+        return { ...m, sender: profileMap.get(m.sender_id), attachments: signedAtts };
+      }));
+      return enrichedData;
     },
     refetchInterval: 5000,
   });
