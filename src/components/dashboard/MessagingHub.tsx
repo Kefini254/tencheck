@@ -431,9 +431,9 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
                   {msg.attachments?.map((att: any) => (
                     <div key={att.id} className="mt-2">
                       {att.file_type === "image" ? (
-                        <img src={att.file_path} alt="attachment" className="rounded-lg max-w-full max-h-48 object-cover" />
+                        <img src={att.signedUrl || att.file_path} alt="attachment" className="rounded-lg max-w-full max-h-48 object-cover" />
                       ) : (
-                        <a href={att.file_path} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-xs underline">
+                        <a href={att.signedUrl || att.file_path} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-xs underline">
                           <FileText className="h-3 w-3" /> View file
                         </a>
                       )}
