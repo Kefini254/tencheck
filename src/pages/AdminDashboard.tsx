@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -15,9 +17,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Shield, BarChart3, Users, Wrench, Bell, FileText, Eye, EyeOff,
   Ban, Trash2, AlertTriangle, CheckCircle, Search, Activity, FileCheck,
+  ChevronDown, MoreVertical, UserCheck, UserX, Clock,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Tab = "overview" | "workers" | "users" | "content" | "alerts" | "log" | "verification";
 
@@ -54,6 +61,8 @@ const AdminDashboard = () => {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("overview");
   const [search, setSearch] = useState("");
+  const [userFilter, setUserFilter] = useState<"active" | "all">("active");
+  const isMobile = useIsMobile();
 
   const { data: isAdmin, isLoading: roleLoading } = useQuery({
     queryKey: ["admin-role-check", user?.id],
@@ -64,31 +73,45 @@ const AdminDashboard = () => {
     enabled: !!user,
   });
 
+  // Real-time subscriptions for profiles + alerts
   useEffect(() => {
     if (!isAdmin) return;
-    const channel = supabase
+    const profileChannel = supabase
+      .channel("admin-profiles-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-metrics"] });
+        qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+      })
+      .subscribe();
+
+    const alertChannel = supabase
       .channel("admin-alerts-rt")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_alerts" }, () => {
         qc.invalidateQueries({ queryKey: ["admin-alerts"] });
         toast.info("New admin alert received");
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(alertChannel);
+    };
   }, [isAdmin, qc]);
 
   // ── QUERIES ──
   const { data: metrics } = useQuery({
     queryKey: ["admin-metrics"],
     queryFn: async () => {
-      const [t, l, w, vw, p, j, cj, tx] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "tenant"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "landlord"),
+      const [t, l, w, vw, p, j, cj, tx, activeCount] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "tenant").eq("is_suspended", false).neq("deletion_status", "deleted"),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "landlord").eq("is_suspended", false).neq("deletion_status", "deleted"),
         supabase.from("service_worker_profiles").select("id", { count: "exact", head: true }),
         supabase.from("service_worker_profiles").select("id", { count: "exact", head: true }).eq("verification_status", "verified"),
         supabase.from("properties").select("id", { count: "exact", head: true }).eq("is_available", true),
         supabase.from("service_requests").select("id", { count: "exact", head: true }),
         supabase.from("service_requests").select("id", { count: "exact", head: true }).eq("status", "completed"),
         supabase.from("rent_transactions").select("id, amount"),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_suspended", false).neq("deletion_status", "deleted"),
       ]);
       const txData = tx.data || [];
       return {
@@ -96,6 +119,7 @@ const AdminDashboard = () => {
         verifiedWorkers: vw.count ?? 0, properties: p.count ?? 0, jobs: j.count ?? 0,
         completedJobs: cj.count ?? 0, transactions: txData.length,
         volume: txData.reduce((s: number, r: any) => s + (r.amount || 0), 0),
+        activeUsers: activeCount.count ?? 0,
       };
     },
     enabled: isAdmin === true,
@@ -123,7 +147,7 @@ const AdminDashboard = () => {
       const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: isAdmin === true && tab === "users",
+    enabled: isAdmin === true && (tab === "users" || tab === "overview"),
   });
 
   const { data: allProperties } = useQuery({
@@ -156,10 +180,10 @@ const AdminDashboard = () => {
   const { data: modLog } = useQuery({
     queryKey: ["admin-mod-log"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("moderation_log").select("*").order("created_at", { ascending: false }).limit(100);
+      const { data } = await (supabase as any).from("moderation_log").select("*").order("created_at", { ascending: false }).limit(200);
       return (data || []) as any[];
     },
-    enabled: isAdmin === true && tab === "log",
+    enabled: isAdmin === true && (tab === "log" || tab === "users"),
   });
 
   const { data: verificationQueue } = useQuery({
@@ -205,7 +229,11 @@ const AdminDashboard = () => {
       await supabase.from("profiles").update({ is_suspended: true } as any).eq("user_id", userId);
       await logAction("suspend_user", userId, "profile", "Admin suspended user");
     },
-    onSuccess: () => { toast.success("User suspended"); qc.invalidateQueries({ queryKey: ["admin-all-users"] }); },
+    onSuccess: () => {
+      toast.success("User suspended");
+      qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-metrics"] });
+    },
   });
 
   const unsuspendUserMut = useMutation({
@@ -213,7 +241,11 @@ const AdminDashboard = () => {
       await supabase.from("profiles").update({ is_suspended: false } as any).eq("user_id", userId);
       await logAction("unsuspend_user", userId, "profile", "Admin unsuspended user");
     },
-    onSuccess: () => { toast.success("User unsuspended"); qc.invalidateQueries({ queryKey: ["admin-all-users"] }); },
+    onSuccess: () => {
+      toast.success("User unsuspended");
+      qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-metrics"] });
+    },
   });
 
   const deleteUserMut = useMutation({
@@ -221,7 +253,11 @@ const AdminDashboard = () => {
       await supabase.from("profiles").update({ deletion_status: "deleted", is_suspended: true } as any).eq("user_id", userId);
       await logAction("delete_user", userId, "profile", "Admin permanently deleted user");
     },
-    onSuccess: () => { toast.success("User marked as deleted"); qc.invalidateQueries({ queryKey: ["admin-all-users"] }); },
+    onSuccess: () => {
+      toast.success("User marked as deleted");
+      qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-metrics"] });
+    },
   });
 
   const removePropertyMut = useMutation({
@@ -284,39 +320,112 @@ const AdminDashboard = () => {
     w.city?.toLowerCase().includes(search.toLowerCase())
   ) ?? [];
 
-  const filteredUsers = allUsers?.filter((u: any) =>
+  const activeUsers = allUsers?.filter((u: any) => !u.is_suspended && u.deletion_status !== "deleted") ?? [];
+  const displayUsers = userFilter === "active" ? activeUsers : (allUsers ?? []);
+  const filteredUsers = displayUsers.filter((u: any) =>
     !search || u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  ) ?? [];
+    u.email?.toLowerCase().includes(search.toLowerCase()) ||
+    u.role?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Build activity log from moderation_log enriched with user info
+  const activityLogEntries = useMemo(() => {
+    if (!modLog) return [];
+    const userMap = new Map((allUsers ?? []).map((u: any) => [u.user_id, u]));
+    return modLog
+      .filter((l: any) => ["suspend_user", "unsuspend_user", "delete_user"].includes(l.action))
+      .map((l: any) => ({
+        ...l,
+        targetUser: userMap.get(l.target_id),
+      }));
+  }, [modLog, allUsers]);
+
+  // Responsive user card for mobile
+  const UserCard = ({ u }: { u: any }) => {
+    const isDeleted = u.deletion_status === "deleted";
+    const isSuspended = u.is_suspended;
+
+    return (
+      <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-sm truncate">{u.name || "—"}</p>
+            <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isSuspended && !isDeleted ? (
+                <DropdownMenuItem onClick={() => unsuspendUserMut.mutate(u.user_id)}>
+                  <CheckCircle className="h-4 w-4 mr-2" /> Unsuspend
+                </DropdownMenuItem>
+              ) : !isDeleted ? (
+                <DropdownMenuItem onClick={() => suspendUserMut.mutate(u.user_id)} className="text-destructive">
+                  <Ban className="h-4 w-4 mr-2" /> Suspend
+                </DropdownMenuItem>
+              ) : null}
+              {!isDeleted && (
+                <DropdownMenuItem onClick={() => deleteUserMut.mutate(u.user_id)} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="secondary" className="capitalize text-[10px]">{u.role}</Badge>
+          {isSuspended && <Badge variant="destructive" className="text-[10px]">Suspended</Badge>}
+          {isDeleted && <Badge variant="destructive" className="text-[10px]">Deleted</Badge>}
+          {!isSuspended && !isDeleted && <Badge className="bg-primary/10 text-primary text-[10px]">Active</Badge>}
+          {u.deletion_status === "pending_deletion" && (
+            <Badge className="bg-yellow-500/10 text-yellow-600 text-[10px]">Pending Delete</Badge>
+          )}
+        </div>
+        <p className="text-[10px] text-muted-foreground">Joined {new Date(u.created_at).toLocaleDateString()}</p>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div className="border-b border-border bg-card sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-primary" />
             <h1 className="font-display text-xl font-bold">TenCheck Admin</h1>
           </div>
-          <button onClick={() => setTab("alerts")} className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-            <Bell className="h-5 w-5" />
-            {unreadAlerts > 0 && (
-              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadAlerts}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Real-time active user counter */}
+            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full">
+              <UserCheck className="h-4 w-4" />
+              <span className="text-sm font-bold">{metrics?.activeUsers ?? 0}</span>
+              <span className="text-xs hidden sm:inline">active</span>
+            </div>
+            <button onClick={() => setTab("alerts")} className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+              <Bell className="h-5 w-5" />
+              {unreadAlerts > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadAlerts}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - scrollable on mobile */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <div className="flex gap-1 flex-wrap mb-6">
+        <div className="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-none">
           {tabItems.map(t => {
             const Icon = t.icon;
             return (
               <button key={t.id} onClick={() => { setTab(t.id); setSearch(""); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                   tab === t.id ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}>
                 <Icon className="h-4 w-4" />
@@ -342,22 +451,22 @@ const AdminDashboard = () => {
             <h2 className="font-display text-lg font-bold flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" /> Platform Overview
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {[
-                { label: "Total Tenants", value: metrics?.tenants ?? 0 },
-                { label: "Total Landlords", value: metrics?.landlords ?? 0 },
+                { label: "Active Users", value: metrics?.activeUsers ?? 0, highlight: true },
+                { label: "Tenants", value: metrics?.tenants ?? 0 },
+                { label: "Landlords", value: metrics?.landlords ?? 0 },
                 { label: "Service Workers", value: metrics?.workers ?? 0 },
                 { label: "Verified Workers", value: metrics?.verifiedWorkers ?? 0 },
                 { label: "Active Properties", value: metrics?.properties ?? 0 },
-                { label: "Total Service Jobs", value: metrics?.jobs ?? 0 },
+                { label: "Total Jobs", value: metrics?.jobs ?? 0 },
                 { label: "Completed Jobs", value: metrics?.completedJobs ?? 0 },
-                { label: "Rent Transactions", value: metrics?.transactions ?? 0 },
+                { label: "Transactions", value: metrics?.transactions ?? 0 },
                 { label: "Payment Volume", value: `KES ${(metrics?.volume ?? 0).toLocaleString()}` },
-                { label: "Unread Alerts", value: unreadAlerts },
               ].map(m => (
-                <div key={m.label} className="rounded-xl border border-border bg-card p-4">
+                <div key={m.label} className={`rounded-xl border bg-card p-4 ${m.highlight ? "border-primary/30 bg-primary/5" : "border-border"}`}>
                   <p className="text-xs text-muted-foreground">{m.label}</p>
-                  <p className="text-2xl font-display font-bold mt-1">{m.value}</p>
+                  <p className={`text-2xl font-display font-bold mt-1 ${m.highlight ? "text-primary" : ""}`}>{m.value}</p>
                 </div>
               ))}
             </div>
@@ -376,69 +485,112 @@ const AdminDashboard = () => {
                 <Input placeholder="Search workers..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
             </div>
-            <div className="rounded-xl border border-border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Verification</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Jobs</TableHead>
-                    <TableHead>Complaints</TableHead>
-                    <TableHead>Visibility</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredWorkers.map((w: any) => (
-                    <TableRow key={w.id}>
-                      <TableCell className="font-medium">{w.profile?.name || "Unknown"}</TableCell>
-                      <TableCell>{w.service_category}</TableCell>
-                      <TableCell>
-                        <Badge className={w.verification_status === "verified" ? "bg-primary/10 text-primary" : w.verification_status === "suspended" ? "bg-destructive/10 text-destructive" : "bg-yellow-500/10 text-yellow-600"}>
-                          {w.verification_status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{Number(w.rating_score || 0).toFixed(1)}</TableCell>
-                      <TableCell>{w.jobs_completed || 0}</TableCell>
-                      <TableCell>
-                        <span className={w.complaintCount >= 3 ? "text-destructive font-bold" : ""}>{w.complaintCount}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="gap-1">
-                          {w.visibility_status === "public" ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                          {w.visibility_status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
+            {isMobile ? (
+              <div className="space-y-2">
+                {filteredWorkers.map((w: any) => (
+                  <div key={w.id} className="rounded-lg border border-border bg-card p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{w.profile?.name || "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">{w.service_category}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                           {w.visibility_status === "public" && (
-                            <ConfirmAction
-                              trigger={<Button size="sm" variant="outline"><EyeOff className="h-3 w-3 mr-1" />Limit</Button>}
-                              title="Reduce Visibility"
-                              description={`Reduce visibility of ${w.profile?.name || "this worker"} to "limited"?`}
-                              onConfirm={() => reduceVisibilityMut.mutate(w.user_id)}
-                            />
+                            <DropdownMenuItem onClick={() => reduceVisibilityMut.mutate(w.user_id)}>
+                              <EyeOff className="h-4 w-4 mr-2" /> Limit Visibility
+                            </DropdownMenuItem>
                           )}
                           {w.verification_status !== "suspended" && (
-                            <ConfirmAction
-                              trigger={<Button size="sm" variant="destructive"><Ban className="h-3 w-3 mr-1" />Suspend</Button>}
-                              title="Suspend Worker"
-                              description={`Suspend ${w.profile?.name || "this worker"}? Their profile will be hidden.`}
-                              onConfirm={() => suspendWorkerMut.mutate(w.user_id)}
-                            />
+                            <DropdownMenuItem onClick={() => suspendWorkerMut.mutate(w.user_id)} className="text-destructive">
+                              <Ban className="h-4 w-4 mr-2" /> Suspend
+                            </DropdownMenuItem>
                           )}
-                        </div>
-                      </TableCell>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="flex gap-1.5 mt-2 flex-wrap">
+                      <Badge className={w.verification_status === "verified" ? "bg-primary/10 text-primary text-[10px]" : w.verification_status === "suspended" ? "bg-destructive/10 text-destructive text-[10px]" : "bg-yellow-500/10 text-yellow-600 text-[10px]"}>
+                        {w.verification_status}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">★ {Number(w.rating_score || 0).toFixed(1)}</Badge>
+                      <Badge variant="outline" className="text-[10px]">{w.jobs_completed || 0} jobs</Badge>
+                      {w.complaintCount > 0 && (
+                        <Badge variant="destructive" className="text-[10px]">{w.complaintCount} complaints</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {filteredWorkers.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No workers found</p>}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Verification</TableHead>
+                      <TableHead>Rating</TableHead>
+                      <TableHead>Jobs</TableHead>
+                      <TableHead>Complaints</TableHead>
+                      <TableHead>Visibility</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                  {filteredWorkers.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No workers found</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredWorkers.map((w: any) => (
+                      <TableRow key={w.id}>
+                        <TableCell className="font-medium">{w.profile?.name || "Unknown"}</TableCell>
+                        <TableCell>{w.service_category}</TableCell>
+                        <TableCell>
+                          <Badge className={w.verification_status === "verified" ? "bg-primary/10 text-primary" : w.verification_status === "suspended" ? "bg-destructive/10 text-destructive" : "bg-yellow-500/10 text-yellow-600"}>
+                            {w.verification_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{Number(w.rating_score || 0).toFixed(1)}</TableCell>
+                        <TableCell>{w.jobs_completed || 0}</TableCell>
+                        <TableCell>
+                          <span className={w.complaintCount >= 3 ? "text-destructive font-bold" : ""}>{w.complaintCount}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            {w.visibility_status === "public" ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                            {w.visibility_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {w.visibility_status === "public" && (
+                              <ConfirmAction
+                                trigger={<Button size="sm" variant="outline"><EyeOff className="h-3 w-3 mr-1" />Limit</Button>}
+                                title="Reduce Visibility"
+                                description={`Reduce visibility of ${w.profile?.name || "this worker"} to "limited"?`}
+                                onConfirm={() => reduceVisibilityMut.mutate(w.user_id)}
+                              />
+                            )}
+                            {w.verification_status !== "suspended" && (
+                              <ConfirmAction
+                                trigger={<Button size="sm" variant="destructive"><Ban className="h-3 w-3 mr-1" />Suspend</Button>}
+                                title="Suspend Worker"
+                                description={`Suspend ${w.profile?.name || "this worker"}? Their profile will be hidden.`}
+                                onConfirm={() => suspendWorkerMut.mutate(w.user_id)}
+                              />
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filteredWorkers.length === 0 && (
+                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No workers found</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         )}
 
@@ -448,81 +600,161 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between flex-wrap gap-3">
               <h2 className="font-display text-lg font-bold flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" /> User Moderation
+                <Badge className="bg-primary/10 text-primary ml-2">{activeUsers.length} active</Badge>
               </h2>
-              <div className="relative max-w-xs w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search users..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search name, email, role..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="shrink-0">
+                      {userFilter === "active" ? "Active" : "All"} <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setUserFilter("active")}>
+                      <UserCheck className="h-4 w-4 mr-2" /> Active Only
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setUserFilter("all")}>
+                      <Users className="h-4 w-4 mr-2" /> All Users
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-            <div className="rounded-xl border border-border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Deletion</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((u: any) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.name || "—"}</TableCell>
-                      <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell><Badge variant="secondary" className="capitalize">{u.role}</Badge></TableCell>
-                      <TableCell>
-                        {u.is_suspended
-                          ? <Badge variant="destructive">Suspended</Badge>
-                          : <Badge className="bg-primary/10 text-primary">Active</Badge>}
-                      </TableCell>
-                      <TableCell>
-                        {u.deletion_status === "pending_deletion" ? (
-                          <Badge className="bg-yellow-500/10 text-yellow-600">Pending Delete</Badge>
-                        ) : u.deletion_status === "deleted" ? (
-                          <Badge variant="destructive">Deleted</Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {u.is_suspended ? (
-                            <ConfirmAction
-                              trigger={<Button size="sm" variant="outline"><CheckCircle className="h-3 w-3 mr-1" />Unsuspend</Button>}
-                              title="Unsuspend User"
-                              description={`Restore access for ${u.name || u.email}?`}
-                              onConfirm={() => unsuspendUserMut.mutate(u.user_id)}
-                            />
-                          ) : (
-                            <ConfirmAction
-                              trigger={<Button size="sm" variant="outline"><Ban className="h-3 w-3 mr-1" />Suspend</Button>}
-                              title="Suspend User"
-                              description={`Suspend ${u.name || u.email}? They will lose platform access.`}
-                              onConfirm={() => suspendUserMut.mutate(u.user_id)}
-                            />
-                          )}
-                          {u.deletion_status !== "deleted" && (
-                            <ConfirmAction
-                              trigger={<Button size="sm" variant="destructive"><Trash2 className="h-3 w-3 mr-1" />Delete</Button>}
-                              title="Permanently Delete User"
-                              description={`Permanently delete ${u.name || u.email}? This action will be logged and cannot be undone.`}
-                              onConfirm={() => deleteUserMut.mutate(u.user_id)}
-                            />
-                          )}
-                        </div>
-                      </TableCell>
+
+            {/* Responsive: cards on mobile, table on desktop */}
+            {isMobile ? (
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between mb-2">
+                    <span className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      {filteredUsers.length} users
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ScrollArea className="max-h-[60vh]">
+                    <div className="space-y-2 pr-2">
+                      {filteredUsers.map((u: any) => (
+                        <UserCard key={u.id} u={u} />
+                      ))}
+                      {filteredUsers.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-8">No users found</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CollapsibleContent>
+              </Collapsible>
+            ) : (
+              <div className="rounded-xl border border-border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                  {filteredUsers.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((u: any) => (
+                      <TableRow key={u.id} className={u.deletion_status === "deleted" ? "opacity-50" : ""}>
+                        <TableCell className="font-medium">{u.name || "—"}</TableCell>
+                        <TableCell className="text-sm">{u.email}</TableCell>
+                        <TableCell><Badge variant="secondary" className="capitalize">{u.role}</Badge></TableCell>
+                        <TableCell>
+                          {u.deletion_status === "deleted" ? (
+                            <Badge variant="destructive">Deleted</Badge>
+                          ) : u.is_suspended ? (
+                            <Badge variant="destructive">Suspended</Badge>
+                          ) : u.deletion_status === "pending_deletion" ? (
+                            <Badge className="bg-yellow-500/10 text-yellow-600">Pending Delete</Badge>
+                          ) : (
+                            <Badge className="bg-primary/10 text-primary">Active</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {u.is_suspended && u.deletion_status !== "deleted" ? (
+                              <ConfirmAction
+                                trigger={<Button size="sm" variant="outline"><CheckCircle className="h-3 w-3 mr-1" />Unsuspend</Button>}
+                                title="Unsuspend User"
+                                description={`Restore access for ${u.name || u.email}?`}
+                                onConfirm={() => unsuspendUserMut.mutate(u.user_id)}
+                              />
+                            ) : u.deletion_status !== "deleted" ? (
+                              <ConfirmAction
+                                trigger={<Button size="sm" variant="outline"><Ban className="h-3 w-3 mr-1" />Suspend</Button>}
+                                title="Suspend User"
+                                description={`Suspend ${u.name || u.email}? They will lose platform access.`}
+                                onConfirm={() => suspendUserMut.mutate(u.user_id)}
+                              />
+                            ) : null}
+                            {u.deletion_status !== "deleted" && (
+                              <ConfirmAction
+                                trigger={<Button size="sm" variant="destructive"><Trash2 className="h-3 w-3 mr-1" />Delete</Button>}
+                                title="Permanently Delete User"
+                                description={`Permanently delete ${u.name || u.email}? This action will be logged and cannot be undone.`}
+                                onConfirm={() => deleteUserMut.mutate(u.user_id)}
+                              />
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filteredUsers.length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* User Action History (inline in users tab) */}
+            {activityLogEntries.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      User Action History ({activityLogEntries.length})
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ScrollArea className="max-h-[40vh] mt-2">
+                    <div className="space-y-2 pr-2">
+                      {activityLogEntries.map((l: any) => (
+                        <div key={l.id} className="rounded-lg border border-border bg-card p-3 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              {l.action === "delete_user" ? <UserX className="h-4 w-4 text-destructive" /> :
+                               l.action === "suspend_user" ? <Ban className="h-4 w-4 text-yellow-500" /> :
+                               <CheckCircle className="h-4 w-4 text-primary" />}
+                              <span className="text-sm font-medium capitalize">{l.action.replace(/_/g, " ")}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {l.targetUser?.name || l.targetUser?.email || l.target_id.slice(0, 8)}
+                              {" · "}{l.reason}
+                            </p>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground shrink-0">{new Date(l.created_at).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
         )}
 
@@ -534,11 +766,11 @@ const AdminDashboard = () => {
             </h2>
             <div className="space-y-3">
               {verificationQueue?.map((v: any) => (
-                <div key={v.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4">
+                <div key={v.id} className="rounded-xl border border-border bg-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-sm">{v.profile?.name || "Unknown Landlord"}</p>
                     <p className="text-xs text-muted-foreground">{v.profile?.email}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <Badge variant="outline" className="text-xs capitalize">{v.document_type.replace(/_/g, " ")}</Badge>
                       <Badge className={
                         v.verification_status === "verified" ? "bg-primary/10 text-primary" :
@@ -548,7 +780,7 @@ const AdminDashboard = () => {
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{new Date(v.created_at).toLocaleDateString()}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {v.document_url && (
                       <Button size="sm" variant="outline" asChild>
                         <a href={v.document_url} target="_blank" rel="noopener noreferrer">
@@ -644,33 +876,35 @@ const AdminDashboard = () => {
                 </Button>
               )}
             </div>
-            <div className="space-y-2">
-              {alerts?.map((a: any) => (
-                <div key={a.id} className={`rounded-lg border p-3 flex items-start justify-between gap-3 ${
-                  a.status === "unread" ? "border-primary/30 bg-primary/5" : "border-border bg-card"
-                }`}>
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${
-                      a.alert_type.includes("suspend") ? "text-destructive" :
-                      a.alert_type === "large_payment" ? "text-yellow-500" : "text-primary"
-                    }`} />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {a.alert_type.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{a.description}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(a.created_at).toLocaleString()}</p>
+            <ScrollArea className="max-h-[70vh]">
+              <div className="space-y-2 pr-2">
+                {alerts?.map((a: any) => (
+                  <div key={a.id} className={`rounded-lg border p-3 flex items-start justify-between gap-3 ${
+                    a.status === "unread" ? "border-primary/30 bg-primary/5" : "border-border bg-card"
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${
+                        a.alert_type.includes("suspend") ? "text-destructive" :
+                        a.alert_type === "large_payment" ? "text-yellow-500" : "text-primary"
+                      }`} />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {a.alert_type.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{a.description}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">{new Date(a.created_at).toLocaleString()}</p>
+                      </div>
                     </div>
+                    {a.status === "unread" && (
+                      <Button size="sm" variant="ghost" className="shrink-0 text-xs" onClick={() => markAlertReadMut.mutate(a.id)}>
+                        Mark read
+                      </Button>
+                    )}
                   </div>
-                  {a.status === "unread" && (
-                    <Button size="sm" variant="ghost" className="shrink-0 text-xs" onClick={() => markAlertReadMut.mutate(a.id)}>
-                      Mark read
-                    </Button>
-                  )}
-                </div>
-              ))}
-              {!alerts?.length && <p className="text-sm text-muted-foreground text-center py-8">No alerts yet.</p>}
-            </div>
+                ))}
+                {!alerts?.length && <p className="text-sm text-muted-foreground text-center py-8">No alerts yet.</p>}
+              </div>
+            </ScrollArea>
           </div>
         )}
 
@@ -680,31 +914,49 @@ const AdminDashboard = () => {
             <h2 className="font-display text-lg font-bold flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" /> Moderation Activity Log
             </h2>
-            <div className="rounded-xl border border-border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Target Type</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            {isMobile ? (
+              <ScrollArea className="max-h-[70vh]">
+                <div className="space-y-2 pr-2">
                   {modLog?.map((l: any) => (
-                    <TableRow key={l.id}>
-                      <TableCell className="font-medium">{l.action.replace(/_/g, " ")}</TableCell>
-                      <TableCell><Badge variant="outline">{l.target_type}</Badge></TableCell>
-                      <TableCell className="text-sm">{l.reason}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{new Date(l.created_at).toLocaleString()}</TableCell>
-                    </TableRow>
+                    <div key={l.id} className="rounded-lg border border-border bg-card p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-[10px]">{l.target_type}</Badge>
+                        <span className="text-sm font-medium capitalize">{l.action.replace(/_/g, " ")}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{l.reason}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(l.created_at).toLocaleString()}</p>
+                    </div>
                   ))}
-                  {!modLog?.length && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No moderation actions recorded</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  {!modLog?.length && <p className="text-sm text-muted-foreground text-center py-8">No moderation actions recorded</p>}
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="rounded-xl border border-border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Target Type</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {modLog?.map((l: any) => (
+                      <TableRow key={l.id}>
+                        <TableCell className="font-medium capitalize">{l.action.replace(/_/g, " ")}</TableCell>
+                        <TableCell><Badge variant="outline">{l.target_type}</Badge></TableCell>
+                        <TableCell className="text-sm">{l.reason}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{new Date(l.created_at).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                    {!modLog?.length && (
+                      <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No moderation actions recorded</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         )}
       </div>
