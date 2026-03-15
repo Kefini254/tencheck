@@ -364,9 +364,7 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
     const { error: uploadErr } = await supabase.storage.from("message-attachments").upload(filePath, file);
     if (uploadErr) { toast.error("Upload failed"); setUploading(false); return; }
 
-    const { data: urlData } = supabase.storage.from("message-attachments").getPublicUrl(filePath);
-
-    // Create message with attachment
+    // Create message with attachment (store raw path, use signed URLs for display)
     const { data: msg, error: msgErr } = await supabase.from("messages").insert({
       thread_id: threadId,
       sender_id: userId,
@@ -377,7 +375,7 @@ const ThreadView = ({ threadId, userId, onBack }: { threadId: string; userId: st
     if (!msgErr && msg) {
       await supabase.from("message_attachments").insert({
         message_id: msg.id,
-        file_path: urlData.publicUrl,
+        file_path: filePath,
         file_type: file.type.startsWith("image") ? "image" : "pdf",
         uploaded_by: userId,
       });
