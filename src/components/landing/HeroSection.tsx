@@ -13,8 +13,8 @@ const HeroSection = () => {
           src={heroImage}
           alt="African landlord verifying tenants outside modern apartments in Kenya"
           className="w-full h-full object-cover"
-          loading="eager" />
-        
+          loading="eager"
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
       </div>
 
@@ -23,8 +23,8 @@ const HeroSection = () => {
         className="absolute top-32 right-[15%] hidden lg:block glass-card rounded-xl p-4 animate-float"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}>
-        
+        transition={{ delay: 1 }}
+      >
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
             <span className="text-primary font-bold text-sm">92</span>
@@ -41,8 +41,8 @@ const HeroSection = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4 }}
-        style={{ animation: "float 4s ease-in-out 1s infinite" }}>
-        
+        style={{ animation: "float 4s ease-in-out 1s infinite" }}
+      >
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
             <Home className="h-4 w-4 text-accent-foreground" />
@@ -60,29 +60,29 @@ const HeroSection = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}>
-            
-            <span className="inline-block px-4 py-1.5 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-6 mx-[33px]">
-              🇰🇪 Built for Kenya's Rental Market. Rewiring rental ecosystem   
+            transition={{ duration: 0.7 }}
+          >
+            <span className="inline-block px-4 py-1.5 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-6">
+              🇰🇪 Built for Kenya's Rental Market
             </span>
           </motion.div>
 
           <motion.h1
-            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 mx-[99px] py-[11px] px-[3px]"
+            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15 }}>
-            
+            transition={{ duration: 0.7, delay: 0.15 }}
+          >
             Know Your Tenant Before You Hand Over the{" "}
             <span className="text-gradient">Keys</span>
           </motion.h1>
 
           <motion.p
-            className="text-lg text-muted-foreground mb-10 leading-relaxed max-w-xl mx-[88px] py-[11px] px-[2px] sm:text-lg"
+            className="text-lg sm:text-xl text-muted-foreground mb-10 leading-relaxed max-w-xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}>
-            
+            transition={{ duration: 0.7, delay: 0.3 }}
+          >
             TenCheck helps landlords verify tenant rent payment behavior and allows tenants to build a trusted rental reputation.
           </motion.p>
 
@@ -90,8 +90,8 @@ const HeroSection = () => {
             className="flex flex-col sm:flex-row gap-4"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.45 }}>
-            
+            transition={{ duration: 0.7, delay: 0.45 }}
+          >
             <Button size="lg" className="gap-2 text-base px-8" asChild>
               <Link to="/signup">
                 <Search className="h-4 w-4" />
@@ -107,8 +107,8 @@ const HeroSection = () => {
           </motion.div>
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 };
 
 export default HeroSection;
