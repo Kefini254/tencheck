@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
-  LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
-  ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
-  TrendingDown, Users, Scale, Sparkles, Share2, Bell, Coins, Flag, ClipboardList
+  LogOut, Menu, X, FileText, Plus, Building2,
+  ChevronRight, ChevronDown, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
+  AlertTriangle, User, CreditCard, Wifi, Award,
+  Scale, Bell, ClipboardList
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
