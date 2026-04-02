@@ -9,7 +9,7 @@ import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
   LogOut, Menu, X, FileText, Plus, Building2,
   ChevronRight, ChevronDown, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  AlertTriangle, User, CreditCard, Wifi, Award,
+  UserCheck, AlertTriangle, User, CreditCard, Wifi, Award, TrendingDown, Sparkles,
   Scale, Bell, ClipboardList
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
