@@ -225,7 +225,7 @@ const ServiceWorkerDashboard = () => {
             <Menu className="h-5 w-5" />
           </button>
           <h1 className="font-display font-bold text-lg text-foreground">
-            {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
+            {allTabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
           </h1>
           <div className="ml-auto">
             <NotificationBell userId={user.id} onClick={() => setActiveTab("notifications")} />
