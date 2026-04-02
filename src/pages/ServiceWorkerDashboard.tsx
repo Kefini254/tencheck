@@ -9,8 +9,9 @@ import {
   Shield, LogOut, Menu, X, ChevronRight, Wrench, Briefcase,
   Clock, History, Settings, Star, MapPin, Phone, Upload,
   CheckCircle, XCircle, User, Eye, EyeOff, Wifi,
-  MessageSquare, Bell, AlertTriangle
+  MessageSquare, Bell, AlertTriangle, ChevronDown
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
