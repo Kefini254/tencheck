@@ -25,6 +25,15 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
+
+  // If coming from an apply link, force tenant role
+  useEffect(() => {
+    if (redirectPath?.startsWith("/apply/")) {
+      setRole("tenant");
+    }
+  }, [redirectPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
