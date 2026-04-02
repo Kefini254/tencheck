@@ -209,21 +209,28 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-2">
-            Menu
-          </p>
-          {tabs.map((tab) => (
-            <SidebarItem
-              key={tab.id}
-              icon={tab.icon}
-              label={tab.label}
-              active={activeTab === tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSidebarOpen(false);
-              }}
-            />
+        <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+          {groups.map((group) => (
+            <Collapsible key={group.label} defaultOpen>
+              <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground group">
+                {group.label}
+                <ChevronDown className="h-3 w-3 transition-transform group-data-[state=closed]:-rotate-90" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-0.5 mt-0.5">
+                {group.tabs.map((tab) => (
+                  <SidebarItem
+                    key={tab.id}
+                    icon={tab.icon}
+                    label={tab.label}
+                    active={activeTab === tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setSidebarOpen(false);
+                    }}
+                  />
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           ))}
         </nav>
 
