@@ -133,15 +133,31 @@ const ServiceWorkerDashboard = () => {
     navigate("/");
   };
 
-  const tabs: { id: Tab; icon: any; label: string }[] = [
-    { id: "overview", icon: User, label: "Profile Overview" },
-    { id: "messages", icon: MessageSquare, label: "Messages" },
-    { id: "notifications", icon: Bell, label: "Notifications" },
-    { id: "incoming", icon: Briefcase, label: "Incoming Jobs" },
-    { id: "active", icon: Clock, label: "Active Jobs" },
-    { id: "history", icon: History, label: "Job History" },
-    { id: "settings", icon: Settings, label: "Profile Settings" },
+  const tabGroups = [
+    {
+      label: "Profile",
+      tabs: [
+        { id: "overview" as Tab, icon: User, label: "Profile Overview" },
+        { id: "settings" as Tab, icon: Settings, label: "Profile Settings" },
+      ],
+    },
+    {
+      label: "Jobs",
+      tabs: [
+        { id: "incoming" as Tab, icon: Briefcase, label: "Incoming Jobs" },
+        { id: "active" as Tab, icon: Clock, label: "Active Jobs" },
+        { id: "history" as Tab, icon: History, label: "Job History" },
+      ],
+    },
+    {
+      label: "Communication",
+      tabs: [
+        { id: "messages" as Tab, icon: MessageSquare, label: "Messages" },
+        { id: "notifications" as Tab, icon: Bell, label: "Notifications" },
+      ],
+    },
   ];
+  const allTabs = tabGroups.flatMap((g) => g.tabs);
 
   return (
     <div className="min-h-screen bg-background flex">
