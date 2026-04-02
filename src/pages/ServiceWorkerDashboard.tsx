@@ -233,7 +233,7 @@ const ServiceWorkerDashboard = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+          <div className="p-4 sm:p-6 lg:p-8 w-full">
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 {activeTab === "overview" && <ProfileOverview profile={workerProfile} />}
