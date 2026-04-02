@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,16 +49,16 @@ const Login = () => {
     const { data: isAdminRole } = await sb.rpc("has_role", { _user_id: uid, _role: "admin" });
     
     setLoading(false);
-    
-    if (isAdminRole) {
+
+    if (redirectPath) {
+      toast.success("Welcome back!");
+      navigate(redirectPath);
+    } else if (isAdminRole) {
       toast.success("Welcome, Admin!");
       navigate("/admin");
     } else if (prof?.role === "service_worker") {
       toast.success("Welcome back!");
       navigate("/worker-dashboard");
-    } else if (prof?.role === "landlord") {
-      toast.success("Welcome back!");
-      navigate("/dashboard");
     } else {
       toast.success("Welcome back!");
       navigate("/dashboard");

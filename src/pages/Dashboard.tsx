@@ -10,7 +10,7 @@ import {
   LogOut, Menu, X, FileText, Plus, Building2,
   ChevronRight, ChevronDown, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
   UserCheck, AlertTriangle, User, CreditCard, Wifi, Award, TrendingDown, Sparkles,
-  Scale, Bell, ClipboardList
+  Scale, Bell, ClipboardList, Link2
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,6 +35,8 @@ import { NotificationsPanel, NotificationBell } from "@/components/dashboard/Not
 import { LandlordTenancyManager, TenantTenancyView } from "@/components/dashboard/TenancyManager";
 import { ServiceCreditsPanel } from "@/components/dashboard/ServiceCreditsPanel";
 import { FileWorkerComplaint } from "@/components/dashboard/WorkerComplaintsPanel";
+import ApplicationLinkGenerator from "@/components/dashboard/ApplicationLinkGenerator";
+import ApplicationsPanel from "@/components/dashboard/ApplicationsPanel";
 
 type Tab = string;
 
@@ -115,6 +117,13 @@ const Dashboard = () => {
         { id: "messages", icon: MessageSquare, label: "Messages" },
         { id: "notifications", icon: Bell, label: "Notifications" },
         { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
+      ],
+    },
+    {
+      label: "Applications",
+      tabs: [
+        { id: "application-links", icon: Link2, label: "Share Links" },
+        { id: "applications", icon: ClipboardList, label: "Applications" },
       ],
     },
     {
@@ -286,6 +295,8 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "landlord" && activeTab === "tenancy-records" && <LandlordTenancyManager userId={user.id} />}
+                {role === "landlord" && activeTab === "application-links" && <ApplicationLinkGenerator userId={user.id} />}
+                {role === "landlord" && activeTab === "applications" && <ApplicationsPanel userId={user.id} />}
 
                 {/* Tenant tabs */}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
