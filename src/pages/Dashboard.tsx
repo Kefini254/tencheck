@@ -93,47 +93,82 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  const landlordTabs = [
-    { id: "my-properties", icon: Building2, label: "Properties" },
-    { id: "messages", icon: MessageSquare, label: "Messages" },
-    { id: "notifications", icon: Bell, label: "Notifications" },
-    { id: "tenancy-records", icon: ClipboardList, label: "Tenancies" },
-    { id: "search-tenant", icon: Search, label: "Search Tenant" },
-    { id: "ai-tenant-rank", icon: Sparkles, label: "AI Tenant Rank" },
-    { id: "report-payment", icon: FileText, label: "Report Payment" },
-    { id: "payment-overview", icon: CreditCard, label: "Payments" },
-    { id: "tenant-risk", icon: TrendingDown, label: "Tenant Risk" },
-    { id: "demand-insights", icon: TrendingUp, label: "Demand Insights" },
-    { id: "trust-network", icon: Users, label: "Trust Network" },
-    { id: "dispute-overview", icon: Scale, label: "Disputes" },
-    { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
-    { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
+  const landlordGroups = [
+    {
+      label: "Overview",
+      tabs: [
+        { id: "my-properties", icon: Building2, label: "Properties" },
+        { id: "tenancy-records", icon: ClipboardList, label: "Tenancies" },
+        { id: "search-tenant", icon: Search, label: "Search Tenant" },
+      ],
+    },
+    {
+      label: "Payments",
+      tabs: [
+        { id: "report-payment", icon: FileText, label: "Report Payment" },
+        { id: "payment-overview", icon: CreditCard, label: "Payment History" },
+      ],
+    },
+    {
+      label: "Communication",
+      tabs: [
+        { id: "messages", icon: MessageSquare, label: "Messages" },
+        { id: "notifications", icon: Bell, label: "Notifications" },
+        { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
+      ],
+    },
+    {
+      label: "Moderation",
+      tabs: [
+        { id: "dispute-overview", icon: Scale, label: "Disputes" },
+      ],
+    },
   ];
 
-  const tenantTabs = [
-    { id: "browse-houses", icon: Home, label: "Browse Houses" },
-    { id: "messages", icon: MessageSquare, label: "Messages" },
-    { id: "notifications", icon: Bell, label: "Notifications" },
-    { id: "tenancies", icon: ClipboardList, label: "My Tenancies" },
-    { id: "ai-recommendations", icon: Sparkles, label: "AI Matches" },
-    { id: "credit-passport", icon: Award, label: "Credit Passport" },
-    { id: "share-passport", icon: Share2, label: "Share Passport" },
-    { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
-    { id: "wallet", icon: Wallet, label: "Wallet" },
-    { id: "financial-requests", icon: Banknote, label: "Financing" },
-    { id: "service-credits", icon: Coins, label: "Service Credits" },
-    { id: "upload-proof", icon: Upload, label: "Upload Proof" },
-    { id: "my-score", icon: BarChart3, label: "My Score" },
-    { id: "my-risk", icon: TrendingDown, label: "My Risk Score" },
-    { id: "trust-connections", icon: Users, label: "Trust Network" },
-    { id: "services", icon: Wifi, label: "Services" },
-    { id: "worker-complaint", icon: Flag, label: "Report Worker" },
-    { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
-    { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
-    { id: "my-profile", icon: User, label: "My Profile" },
+  const tenantGroups = [
+    {
+      label: "Housing",
+      tabs: [
+        { id: "browse-houses", icon: Home, label: "Browse Houses" },
+        { id: "tenancies", icon: ClipboardList, label: "My Tenancies" },
+      ],
+    },
+    {
+      label: "Reputation",
+      tabs: [
+        { id: "credit-passport", icon: Award, label: "Credit Passport" },
+      ],
+    },
+    {
+      label: "Payments",
+      tabs: [
+        { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
+      ],
+    },
+    {
+      label: "Services",
+      tabs: [
+        { id: "services", icon: Wifi, label: "Request Service" },
+        { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
+      ],
+    },
+    {
+      label: "Communication",
+      tabs: [
+        { id: "messages", icon: MessageSquare, label: "Messages" },
+        { id: "notifications", icon: Bell, label: "Notifications" },
+      ],
+    },
+    {
+      label: "Account",
+      tabs: [
+        { id: "my-profile", icon: User, label: "My Profile" },
+      ],
+    },
   ];
 
-  const tabs = role === "landlord" ? landlordTabs : tenantTabs;
+  const groups = role === "landlord" ? landlordGroups : tenantGroups;
+  const allTabs = groups.flatMap((g) => g.tabs);
 
   return (
     <div className="min-h-screen bg-background flex">
