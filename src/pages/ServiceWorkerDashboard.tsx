@@ -9,8 +9,9 @@ import {
   Shield, LogOut, Menu, X, ChevronRight, Wrench, Briefcase,
   Clock, History, Settings, Star, MapPin, Phone, Upload,
   CheckCircle, XCircle, User, Eye, EyeOff, Wifi,
-  MessageSquare, Bell, AlertTriangle
+  MessageSquare, Bell, AlertTriangle, ChevronDown
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,15 +133,31 @@ const ServiceWorkerDashboard = () => {
     navigate("/");
   };
 
-  const tabs: { id: Tab; icon: any; label: string }[] = [
-    { id: "overview", icon: User, label: "Profile Overview" },
-    { id: "messages", icon: MessageSquare, label: "Messages" },
-    { id: "notifications", icon: Bell, label: "Notifications" },
-    { id: "incoming", icon: Briefcase, label: "Incoming Jobs" },
-    { id: "active", icon: Clock, label: "Active Jobs" },
-    { id: "history", icon: History, label: "Job History" },
-    { id: "settings", icon: Settings, label: "Profile Settings" },
+  const tabGroups = [
+    {
+      label: "Profile",
+      tabs: [
+        { id: "overview" as Tab, icon: User, label: "Profile Overview" },
+        { id: "settings" as Tab, icon: Settings, label: "Profile Settings" },
+      ],
+    },
+    {
+      label: "Jobs",
+      tabs: [
+        { id: "incoming" as Tab, icon: Briefcase, label: "Incoming Jobs" },
+        { id: "active" as Tab, icon: Clock, label: "Active Jobs" },
+        { id: "history" as Tab, icon: History, label: "Job History" },
+      ],
+    },
+    {
+      label: "Communication",
+      tabs: [
+        { id: "messages" as Tab, icon: MessageSquare, label: "Messages" },
+        { id: "notifications" as Tab, icon: Bell, label: "Notifications" },
+      ],
+    },
   ];
+  const allTabs = tabGroups.flatMap((g) => g.tabs);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -171,16 +188,25 @@ const ServiceWorkerDashboard = () => {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-2">Menu</p>
-          {tabs.map((tab) => (
-            <SidebarItem
-              key={tab.id}
-              icon={tab.icon}
-              label={tab.label}
-              active={activeTab === tab.id}
-              onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
-            />
+        <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+          {tabGroups.map((group) => (
+            <Collapsible key={group.label} defaultOpen>
+              <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground group">
+                {group.label}
+                <ChevronDown className="h-3 w-3 transition-transform group-data-[state=closed]:-rotate-90" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-0.5 mt-0.5">
+                {group.tabs.map((tab) => (
+                  <SidebarItem
+                    key={tab.id}
+                    icon={tab.icon}
+                    label={tab.label}
+                    active={activeTab === tab.id}
+                    onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
+                  />
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           ))}
         </nav>
 
@@ -199,7 +225,7 @@ const ServiceWorkerDashboard = () => {
             <Menu className="h-5 w-5" />
           </button>
           <h1 className="font-display font-bold text-lg text-foreground">
-            {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
+            {allTabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
           </h1>
           <div className="ml-auto">
             <NotificationBell userId={user.id} onClick={() => setActiveTab("notifications")} />
@@ -207,7 +233,7 @@ const ServiceWorkerDashboard = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+          <div className="p-4 sm:p-6 lg:p-8 w-full">
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 {activeTab === "overview" && <ProfileOverview profile={workerProfile} />}
