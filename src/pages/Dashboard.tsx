@@ -265,7 +265,7 @@ const Dashboard = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+          <div className="p-4 sm:p-6 lg:p-8 w-full">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
