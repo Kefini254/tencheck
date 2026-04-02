@@ -35,6 +35,8 @@ import { NotificationsPanel, NotificationBell } from "@/components/dashboard/Not
 import { LandlordTenancyManager, TenantTenancyView } from "@/components/dashboard/TenancyManager";
 import { ServiceCreditsPanel } from "@/components/dashboard/ServiceCreditsPanel";
 import { FileWorkerComplaint } from "@/components/dashboard/WorkerComplaintsPanel";
+import ApplicationLinkGenerator from "@/components/dashboard/ApplicationLinkGenerator";
+import ApplicationsPanel from "@/components/dashboard/ApplicationsPanel";
 
 type Tab = string;
 
