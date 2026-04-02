@@ -48,7 +48,7 @@ const Signup = () => {
       toast.error(error.message);
     } else {
       toast.success("Account created! Check your email to confirm, then log in.");
-      navigate("/login");
+      navigate(redirectPath ? `/login?redirect=${encodeURIComponent(redirectPath)}` : "/login");
     }
   };
 
