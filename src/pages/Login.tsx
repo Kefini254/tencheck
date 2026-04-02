@@ -49,16 +49,16 @@ const Login = () => {
     const { data: isAdminRole } = await sb.rpc("has_role", { _user_id: uid, _role: "admin" });
     
     setLoading(false);
-    
-    if (isAdminRole) {
+
+    if (redirectPath) {
+      toast.success("Welcome back!");
+      navigate(redirectPath);
+    } else if (isAdminRole) {
       toast.success("Welcome, Admin!");
       navigate("/admin");
     } else if (prof?.role === "service_worker") {
       toast.success("Welcome back!");
       navigate("/worker-dashboard");
-    } else if (prof?.role === "landlord") {
-      toast.success("Welcome back!");
-      navigate("/dashboard");
     } else {
       toast.success("Welcome back!");
       navigate("/dashboard");
