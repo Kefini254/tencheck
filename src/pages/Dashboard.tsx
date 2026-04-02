@@ -120,6 +120,13 @@ const Dashboard = () => {
       ],
     },
     {
+      label: "Applications",
+      tabs: [
+        { id: "application-links", icon: Link2, label: "Share Links" },
+        { id: "applications", icon: ClipboardList, label: "Applications" },
+      ],
+    },
+    {
       label: "Moderation",
       tabs: [
         { id: "dispute-overview", icon: Scale, label: "Disputes" },
