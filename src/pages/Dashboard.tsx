@@ -295,6 +295,8 @@ const Dashboard = () => {
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "landlord" && activeTab === "tenancy-records" && <LandlordTenancyManager userId={user.id} />}
+                {role === "landlord" && activeTab === "application-links" && <ApplicationLinkGenerator userId={user.id} />}
+                {role === "landlord" && activeTab === "applications" && <ApplicationsPanel userId={user.id} />}
 
                 {/* Tenant tabs */}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
