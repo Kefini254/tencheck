@@ -47,6 +47,41 @@ export type Database = {
         }
         Relationships: []
       }
+      application_links: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          landlord_id: string
+          property_id: string
+          unique_token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          landlord_id: string
+          property_id: string
+          unique_token?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          landlord_id?: string
+          property_id?: string
+          unique_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_links_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disputes: {
         Row: {
           created_at: string
@@ -560,6 +595,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      property_applications: {
+        Row: {
+          application_status: string
+          created_at: string
+          id: string
+          landlord_id: string
+          message: string | null
+          property_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          application_status?: string
+          created_at?: string
+          id?: string
+          landlord_id: string
+          message?: string | null
+          property_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          application_status?: string
+          created_at?: string
+          id?: string
+          landlord_id?: string
+          message?: string | null
+          property_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_applications_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_demand: {
         Row: {

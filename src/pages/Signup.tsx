@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,15 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
+
+  // If coming from an apply link, force tenant role
+  useEffect(() => {
+    if (redirectPath?.startsWith("/apply/")) {
+      setRole("tenant");
+    }
+  }, [redirectPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +48,7 @@ const Signup = () => {
       toast.error(error.message);
     } else {
       toast.success("Account created! Check your email to confirm, then log in.");
-      navigate("/login");
+      navigate(redirectPath ? `/login?redirect=${encodeURIComponent(redirectPath)}` : "/login");
     }
   };
 

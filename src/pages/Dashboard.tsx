@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Shield, Search, Home, Upload, BarChart3, MessageSquare,
-  LogOut, Menu, X, FileText, Plus, Building2, TrendingUp,
-  ChevronRight, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
-  UserCheck, AlertTriangle, User, CreditCard, Wallet, Wifi, Banknote, Award,
-  TrendingDown, Users, Scale, Sparkles, Share2, Bell, Coins, Flag, ClipboardList
+  LogOut, Menu, X, FileText, Plus, Building2,
+  ChevronRight, ChevronDown, Eye, Bed, Bath, MapPin, ImageIcon, Edit, Trash2,
+  UserCheck, AlertTriangle, User, CreditCard, Wifi, Award, TrendingDown, Sparkles,
+  Scale, Bell, ClipboardList, Link2
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,8 @@ import { NotificationsPanel, NotificationBell } from "@/components/dashboard/Not
 import { LandlordTenancyManager, TenantTenancyView } from "@/components/dashboard/TenancyManager";
 import { ServiceCreditsPanel } from "@/components/dashboard/ServiceCreditsPanel";
 import { FileWorkerComplaint } from "@/components/dashboard/WorkerComplaintsPanel";
+import ApplicationLinkGenerator from "@/components/dashboard/ApplicationLinkGenerator";
+import ApplicationsPanel from "@/components/dashboard/ApplicationsPanel";
 
 type Tab = string;
 
@@ -92,47 +95,89 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  const landlordTabs = [
-    { id: "my-properties", icon: Building2, label: "Properties" },
-    { id: "messages", icon: MessageSquare, label: "Messages" },
-    { id: "notifications", icon: Bell, label: "Notifications" },
-    { id: "tenancy-records", icon: ClipboardList, label: "Tenancies" },
-    { id: "search-tenant", icon: Search, label: "Search Tenant" },
-    { id: "ai-tenant-rank", icon: Sparkles, label: "AI Tenant Rank" },
-    { id: "report-payment", icon: FileText, label: "Report Payment" },
-    { id: "payment-overview", icon: CreditCard, label: "Payments" },
-    { id: "tenant-risk", icon: TrendingDown, label: "Tenant Risk" },
-    { id: "demand-insights", icon: TrendingUp, label: "Demand Insights" },
-    { id: "trust-network", icon: Users, label: "Trust Network" },
-    { id: "dispute-overview", icon: Scale, label: "Disputes" },
-    { id: "endorse-worker", icon: UserCheck, label: "Endorse Worker" },
-    { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
+  const landlordGroups = [
+    {
+      label: "Overview",
+      tabs: [
+        { id: "my-properties", icon: Building2, label: "Properties" },
+        { id: "tenancy-records", icon: ClipboardList, label: "Tenancies" },
+        { id: "search-tenant", icon: Search, label: "Search Tenant" },
+      ],
+    },
+    {
+      label: "Payments",
+      tabs: [
+        { id: "report-payment", icon: FileText, label: "Report Payment" },
+        { id: "payment-overview", icon: CreditCard, label: "Payment History" },
+      ],
+    },
+    {
+      label: "Communication",
+      tabs: [
+        { id: "messages", icon: MessageSquare, label: "Messages" },
+        { id: "notifications", icon: Bell, label: "Notifications" },
+        { id: "inquiries", icon: MessageSquare, label: "Inquiries" },
+      ],
+    },
+    {
+      label: "Applications",
+      tabs: [
+        { id: "application-links", icon: Link2, label: "Share Links" },
+        { id: "applications", icon: ClipboardList, label: "Applications" },
+      ],
+    },
+    {
+      label: "Moderation",
+      tabs: [
+        { id: "dispute-overview", icon: Scale, label: "Disputes" },
+      ],
+    },
   ];
 
-  const tenantTabs = [
-    { id: "browse-houses", icon: Home, label: "Browse Houses" },
-    { id: "messages", icon: MessageSquare, label: "Messages" },
-    { id: "notifications", icon: Bell, label: "Notifications" },
-    { id: "tenancies", icon: ClipboardList, label: "My Tenancies" },
-    { id: "ai-recommendations", icon: Sparkles, label: "AI Matches" },
-    { id: "credit-passport", icon: Award, label: "Credit Passport" },
-    { id: "share-passport", icon: Share2, label: "Share Passport" },
-    { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
-    { id: "wallet", icon: Wallet, label: "Wallet" },
-    { id: "financial-requests", icon: Banknote, label: "Financing" },
-    { id: "service-credits", icon: Coins, label: "Service Credits" },
-    { id: "upload-proof", icon: Upload, label: "Upload Proof" },
-    { id: "my-score", icon: BarChart3, label: "My Score" },
-    { id: "my-risk", icon: TrendingDown, label: "My Risk Score" },
-    { id: "trust-connections", icon: Users, label: "Trust Network" },
-    { id: "services", icon: Wifi, label: "Services" },
-    { id: "worker-complaint", icon: Flag, label: "Report Worker" },
-    { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
-    { id: "my-inquiries", icon: MessageSquare, label: "My Inquiries" },
-    { id: "my-profile", icon: User, label: "My Profile" },
+  const tenantGroups = [
+    {
+      label: "Housing",
+      tabs: [
+        { id: "browse-houses", icon: Home, label: "Browse Houses" },
+        { id: "tenancies", icon: ClipboardList, label: "My Tenancies" },
+      ],
+    },
+    {
+      label: "Reputation",
+      tabs: [
+        { id: "credit-passport", icon: Award, label: "Credit Passport" },
+      ],
+    },
+    {
+      label: "Payments",
+      tabs: [
+        { id: "rent-payment", icon: CreditCard, label: "Pay Rent" },
+      ],
+    },
+    {
+      label: "Services",
+      tabs: [
+        { id: "services", icon: Wifi, label: "Request Service" },
+        { id: "my-disputes", icon: AlertTriangle, label: "My Disputes" },
+      ],
+    },
+    {
+      label: "Communication",
+      tabs: [
+        { id: "messages", icon: MessageSquare, label: "Messages" },
+        { id: "notifications", icon: Bell, label: "Notifications" },
+      ],
+    },
+    {
+      label: "Account",
+      tabs: [
+        { id: "my-profile", icon: User, label: "My Profile" },
+      ],
+    },
   ];
 
-  const tabs = role === "landlord" ? landlordTabs : tenantTabs;
+  const groups = role === "landlord" ? landlordGroups : tenantGroups;
+  const allTabs = groups.flatMap((g) => g.tabs);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -173,21 +218,28 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-2">
-            Menu
-          </p>
-          {tabs.map((tab) => (
-            <SidebarItem
-              key={tab.id}
-              icon={tab.icon}
-              label={tab.label}
-              active={activeTab === tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSidebarOpen(false);
-              }}
-            />
+        <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+          {groups.map((group) => (
+            <Collapsible key={group.label} defaultOpen>
+              <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground group">
+                {group.label}
+                <ChevronDown className="h-3 w-3 transition-transform group-data-[state=closed]:-rotate-90" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-0.5 mt-0.5">
+                {group.tabs.map((tab) => (
+                  <SidebarItem
+                    key={tab.id}
+                    icon={tab.icon}
+                    label={tab.label}
+                    active={activeTab === tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setSidebarOpen(false);
+                    }}
+                  />
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           ))}
         </nav>
 
@@ -215,14 +267,14 @@ const Dashboard = () => {
               <Menu className="h-5 w-5" />
             </button>
             <h1 className="font-display font-bold text-lg text-foreground">
-              {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
+              {allTabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
             </h1>
           </div>
           <NotificationBell userId={user.id} onClick={() => setActiveTab("notifications")} />
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+          <div className="p-4 sm:p-6 lg:p-8 w-full">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -237,41 +289,22 @@ const Dashboard = () => {
 
                 {/* Landlord tabs */}
                 {role === "landlord" && activeTab === "search-tenant" && <SearchTenantView />}
-                {role === "landlord" && activeTab === "ai-tenant-rank" && <LandlordAIRankView userId={user.id} />}
                 {role === "landlord" && activeTab === "report-payment" && <ReportPaymentView userId={user.id} />}
                 {role === "landlord" && activeTab === "my-properties" && <MyPropertiesView userId={user.id} />}
                 {role === "landlord" && activeTab === "payment-overview" && <LandlordPaymentOverview userId={user.id} />}
-                {role === "landlord" && activeTab === "endorse-worker" && <EndorseWorkerView userId={user.id} />}
                 {role === "landlord" && activeTab === "inquiries" && <LandlordInquiriesView userId={user.id} />}
-                {role === "landlord" && activeTab === "tenant-risk" && <LandlordTenantRiskView />}
-                {role === "landlord" && activeTab === "demand-insights" && <PropertyDemandPanel />}
-                {role === "landlord" && activeTab === "trust-network" && <TrustNetworkPanel userId={user.id} />}
                 {role === "landlord" && activeTab === "dispute-overview" && <DisputeOverviewPanel userId={user.id} role="landlord" />}
                 {role === "landlord" && activeTab === "tenancy-records" && <LandlordTenancyManager userId={user.id} />}
+                {role === "landlord" && activeTab === "application-links" && <ApplicationLinkGenerator userId={user.id} />}
+                {role === "landlord" && activeTab === "applications" && <ApplicationsPanel userId={user.id} />}
 
                 {/* Tenant tabs */}
                 {role === "tenant" && activeTab === "browse-houses" && <BrowseHousesView />}
-                {role === "tenant" && activeTab === "ai-recommendations" && <AIMatchPanel userId={user.id} mode="tenant" />}
-                {role === "tenant" && activeTab === "share-passport" && <SharePassport userId={user.id} />}
                 {role === "tenant" && activeTab === "credit-passport" && <CreditPassportCard userId={user.id} />}
                 {role === "tenant" && activeTab === "rent-payment" && <TenantPaymentPanel userId={user.id} />}
-                {role === "tenant" && activeTab === "wallet" && (
-                  <div className="space-y-6">
-                    <TenantPaymentPanel userId={user.id} />
-                    <WalletDeposit userId={user.id} />
-                  </div>
-                )}
-                {role === "tenant" && activeTab === "financial-requests" && <FinancialRequestPanel userId={user.id} />}
-                {role === "tenant" && activeTab === "service-credits" && <ServiceCreditsPanel userId={user.id} />}
-                {role === "tenant" && activeTab === "upload-proof" && <UploadProofView />}
-                {role === "tenant" && activeTab === "my-score" && <MyScoreView userId={user.id} />}
                 {role === "tenant" && activeTab === "services" && <ServiceRequestPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "my-disputes" && <MyDisputesView userId={user.id} />}
-                {role === "tenant" && activeTab === "my-risk" && <TenantRiskPanel tenantId={user.id} />}
-                {role === "tenant" && activeTab === "trust-connections" && <TrustNetworkPanel userId={user.id} />}
                 {role === "tenant" && activeTab === "tenancies" && <TenantTenancyView userId={user.id} />}
-                {role === "tenant" && activeTab === "worker-complaint" && <FileWorkerComplaint userId={user.id} />}
-                {role === "tenant" && activeTab === "my-inquiries" && <TenantInquiriesView userId={user.id} />}
                 {role === "tenant" && activeTab === "my-profile" && (
                   <div className="text-center py-8">
                     <Button asChild><Link to="/my-profile">Open Full Profile</Link></Button>
