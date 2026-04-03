@@ -24,11 +24,15 @@ TenCheck is a rental verification and tenant reputation platform purpose-built f
    - [Landlord Dashboard](#82-landlord-dashboard)
    - [Service Worker Dashboard](#83-service-worker-dashboard)
    - [Admin Dashboard](#84-admin-dashboard)
-9. [Project Structure](#9-project-structure)
-10. [Pages & Routes](#10-pages--routes)
-11. [Environment Variables](#11-environment-variables)
-12. [Local Development Setup](#12-local-development-setup)
-13. [Scripts Reference](#13-scripts-reference)
+9. [Diagrams](#9-diagrams)
+   - [Data Flow Diagrams (DFD)](#91-data-flow-diagrams-dfd)
+   - [UML Diagrams](#92-uml-diagrams)
+   - [Use Case Diagrams](#93-use-case-diagrams)
+10. [Project Structure](#10-project-structure)
+11. [Pages & Routes](#11-pages--routes)
+12. [Environment Variables](#12-environment-variables)
+13. [Local Development Setup](#13-local-development-setup)
+14. [Scripts Reference](#14-scripts-reference)
 
 ---
 
@@ -557,7 +561,215 @@ Accessible at `/admin` (requires `admin` role in `user_roles` table). Provides:
 
 ---
 
-## 9. Project Structure
+## 9. Diagrams
+
+All diagrams are written as **Mermaid** code blocks and render natively on GitHub.
+
+### 9.1 Data Flow Diagrams (DFD)
+
+Full file: [`docs/dfd.md`](docs/dfd.md)
+
+| Level | Description |
+|---|---|
+| **Level 0** (Context) | TenCheck as a single black-box; all external entities and high-level data flows |
+| **Level 1** | 8 core processes + 7 data stores + all entity interactions |
+| **Level 2** | Deep-dive into Process 3 (Payments), Process 4 (Credit Scoring), and Process 2 (Property Management) |
+| **Level 3** | Step-by-step breakdown of the `calculate_credit_passport` stored function |
+
+#### Level 0 — Context Diagram
+
+```mermaid
+flowchart LR
+    Tenant["Tenant"]
+    Landlord["Landlord"]
+    Worker["Service Worker"]
+    Admin["Admin"]
+    Mpesa["M-Pesa API"]
+
+    TC(["TenCheck\nPlatform"])
+
+    Tenant  -->|"Registration, payments,\nservice requests"| TC
+    TC      -->|"Credit passport, listings,\nnotifications"| Tenant
+
+    Landlord -->|"Properties, payment reports,\ntenant searches"| TC
+    TC       -->|"Tenant scores, demand\ninsights, alerts"| Landlord
+
+    Worker -->|"Worker profile,\njob status updates"| TC
+    TC     -->|"Service jobs, reviews,\nendorsements"| Worker
+
+    Admin -->|"Moderation actions,\nverifications, config"| TC
+    TC    -->|"System alerts, user\nreports, audit logs"| Admin
+
+    TC    -->|"Verification request"| Mpesa
+    Mpesa -->|"Transaction confirmation"| TC
+```
+
+---
+
+### 9.2 UML Diagrams
+
+Full file: [`docs/uml.md`](docs/uml.md)
+
+| Diagram | Description |
+|---|---|
+| **Class Diagram** | All domain entities, attributes, and relationships |
+| **Sequence — Registration & Sign-In** | Full auth flow through Supabase and DB trigger |
+| **Sequence — Tenant Screening** | Landlord searches and views a tenant's profile |
+| **Sequence — M-Pesa Payment** | Tenant records, uploads evidence, M-Pesa verified, score updated |
+| **Sequence — Service Booking** | Tenant creates request; worker accepts; real-time updates |
+| **Sequence — Dispute Resolution** | Tenant files → landlord responds → admin resolves |
+| **Activity — Sign-Up Flow** | Step-by-step registration with role branching |
+| **Activity — Credit Score Calculation** | Formula, confidence levels, database upsert |
+| **Component Diagram** | Frontend modules ↔ Supabase services |
+| **Deployment Diagram** | Browser → CDN → Supabase Cloud → PostgreSQL |
+
+#### Class Diagram (core entities)
+
+```mermaid
+classDiagram
+    class Profile {
+        +UUID id
+        +String name
+        +String email
+        +String role
+        +Boolean isSuspended
+    }
+    class Tenant {
+        +UUID id
+        +String nationalId
+        +Boolean identityVerified
+    }
+    class Landlord {
+        +UUID id
+        +Boolean isVerified
+    }
+    class Property {
+        +UUID id
+        +String title
+        +String location
+        +Decimal rentAmount
+        +Boolean isAvailable
+    }
+    class TenancyRecord {
+        +UUID id
+        +Date leaseStartDate
+        +Date leaseEndDate
+        +String status
+    }
+    class RentTransaction {
+        +UUID id
+        +Decimal amount
+        +String mpesaCode
+        +String verificationStatus
+    }
+    class TenantCreditPassport {
+        +Int creditScore
+        +String confidenceLevel
+        +Int verifiedPayments
+        +Int latePayments
+        +Int missedPayments
+    }
+    class TenantRisk {
+        +Decimal riskScore
+        +Int disputesCount
+    }
+    class ServiceRequest {
+        +UUID id
+        +String category
+        +String status
+    }
+    class Thread {
+        +UUID id
+    }
+    class Message {
+        +UUID id
+        +String content
+        +Boolean isRead
+    }
+    class Dispute {
+        +UUID id
+        +String disputeType
+        +String status
+    }
+
+    Profile "1" --> "0..1" Tenant        : has
+    Profile "1" --> "0..1" Landlord      : has
+    Landlord "1" --> "*" Property        : owns
+    Property "1" --> "*" TenancyRecord   : tracked by
+    Tenant "1" --> "*" TenancyRecord     : has
+    Tenant "1" --> "*" RentTransaction   : makes
+    Tenant "1" --> "1" TenantCreditPassport : has
+    Tenant "1" --> "1" TenantRisk        : assessed by
+    Tenant "1" --> "*" ServiceRequest    : creates
+    Tenant "1" --> "*" Dispute           : raises
+    Thread "1" --> "*" Message           : contains
+```
+
+---
+
+### 9.3 Use Case Diagrams
+
+Full file: [`docs/usecases.md`](docs/usecases.md)
+
+| Diagram | Description |
+|---|---|
+| **System Overview** | All actors and feature areas at a glance |
+| **Tenant** | 28 use cases: auth, properties, payments, passport, services, social |
+| **Landlord** | 22 use cases: auth, property mgmt, tenant mgmt, payments, comms |
+| **Service Worker** | 13 use cases: auth, job management, reputation, comms |
+| **Admin** | 14 use cases: user mgmt, verification, moderation, monitoring |
+| **Dispute Resolution** | Cross-actor flow: Tenant → Landlord → Admin |
+| **Rent Payment Verification** | Cross-actor flow: Tenant → M-Pesa API → Credit Score |
+
+#### System Overview
+
+```mermaid
+flowchart LR
+    Tenant["👤 Tenant"]
+    Landlord["👤 Landlord"]
+    Worker["👤 Service Worker"]
+    Admin["👤 Admin"]
+
+    subgraph TenCheck ["TenCheck System"]
+        UC_AUTH(["Account &\nAuthentication"])
+        UC_PROP(["Browse & Manage\nProperties"])
+        UC_PAY(["Rent Payment\nProcessing"])
+        UC_SCORE(["Credit Scoring\n& Passport"])
+        UC_SVC(["Service\nMarketplace"])
+        UC_MSG(["Messaging &\nNotifications"])
+        UC_DISP(["Dispute\nResolution"])
+        UC_ADMIN(["System\nAdministration"])
+    end
+
+    Tenant   --- UC_AUTH
+    Landlord --- UC_AUTH
+    Worker   --- UC_AUTH
+
+    Tenant   --- UC_PROP
+    Landlord --- UC_PROP
+
+    Tenant   --- UC_PAY
+    Landlord --- UC_PAY
+
+    Tenant   --- UC_SCORE
+    Landlord --- UC_SCORE
+
+    Tenant --- UC_SVC
+    Worker --- UC_SVC
+
+    Tenant   --- UC_MSG
+    Landlord --- UC_MSG
+
+    Tenant   --- UC_DISP
+    Landlord --- UC_DISP
+    Admin    --- UC_DISP
+
+    Admin --- UC_ADMIN
+```
+
+---
+
+## 10. Project Structure
 
 ```
 tencheck/
@@ -676,7 +888,7 @@ tencheck/
 
 ---
 
-## 10. Pages & Routes
+## 11. Pages & Routes
 
 | Route | Page | Access | Description |
 |---|---|---|---|
@@ -700,7 +912,7 @@ tencheck/
 
 ---
 
-## 11. Environment Variables
+## 12. Environment Variables
 
 Create a `.env` file in the repository root with the following variables:
 
@@ -721,7 +933,7 @@ VITE_SUPABASE_URL=https://your_project_id.supabase.co
 
 ---
 
-## 12. Local Development Setup
+## 13. Local Development Setup
 
 ### Prerequisites
 
@@ -776,7 +988,7 @@ VITE_SUPABASE_URL=https://your_project_id.supabase.co
 
 ---
 
-## 13. Scripts Reference
+## 14. Scripts Reference
 
 | Script | Command | Description |
 |---|---|---|
